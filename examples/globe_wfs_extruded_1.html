@@ -56,17 +56,17 @@
                 Promise.all(promises).then(function () {
                     menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
                     menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
-                    
-                    
+
+
                     addMeshToScene();
-                    
-                    
+
+
                     menuGlobe.gui.add({ WatherLevel: 0.0}, 'WatherLevel').min(-10.0).max(50.0).onChange((
                         function updateWatherLevel(value) {
                             adjustAltitude(value);
                             globeView.notifyChange(true);
-                        
-                        }).blind(this));
+
+                        }));
                     globeView.controls.setTilt(45, true);
                 });
             });

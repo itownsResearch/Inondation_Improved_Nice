@@ -158,6 +158,21 @@ globeView.addLayer({
 exports.view = globeView;
 exports.initialPosition = positionOnGlobe;
 
+function modify_level(attribute, alt) {
+  // position of the mesh
+  var meshCoord1 = new itowns.Coordinates("EPSG:4326", 4.8003, 45.7242, 161.76 + alt).as(globeView.referenceCrs).xyz();
+  var meshCoord2 = new itowns.Coordinates("EPSG:4326", 4.8391, 45.7242, 161.76 + alt).as(globeView.referenceCrs).xyz();
+  var meshCoord3 = new itowns.Coordinates("EPSG:4326", 4.8391, 45.7582, 161.76 + alt).as(globeView.referenceCrs).xyz();
+  var meshCoord4 = new itowns.Coordinates("EPSG:4326", 4.8003, 45.7582, 161.76 + alt).as(globeView.referenceCrs).xyz();
+
+  attribute.setXYZ(0, meshCoord1.x, meshCoord1.y,  meshCoord1.z);
+  attribute.setXYZ(1,  meshCoord2.x, meshCoord2.y,  meshCoord2.z);
+  attribute.setXYZ(2,  meshCoord3.x, meshCoord3.y,  meshCoord3.z);
+  attribute.setXYZ(3,  meshCoord3.x, meshCoord3.y,  meshCoord3.z);
+  attribute.setXYZ(4,  meshCoord4.x, meshCoord4.y,  meshCoord4.z);
+  attribute.setXYZ(5,  meshCoord1.x, meshCoord1.y,  meshCoord1.z);
+}
+
 function addMeshToScene() {
     // creation of the new mesh (a cylinder)
     var THREE = itowns.THREE;
@@ -168,26 +183,25 @@ function addMeshToScene() {
     /*var geometry = new THREE.SphereGeometry(100, 32, 32);
     var material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: texture });// MeshBasicMaterial();//({ color: 0xff0000 });
    */
-    var geometry = new THREE.PlaneBufferGeometry( 50000, 20000, 32 );
-    var material = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide, transparent: true, opacity: 0.5} );
+
+    var geometry = new THREE.BufferGeometry();
+
+    var position = new THREE.BufferAttribute( new Float32Array(18), 3 ) ;
+    modify_level(position, 0);
+    position.dynamic = true;
+    geometry.addAttribute( 'position',  position);
+    var material = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide, transparent: true, opacity: 0.5});
     var mesh = new THREE.Mesh(geometry, material);
 
     // get the position on the globe, from the camera
-    var cameraTargetPosition = globeView.controls.getCameraTargetGeoPosition();
-    console.log(cameraTargetPosition);
-
-
-    // position of the mesh
-    var meshCoord = cameraTargetPosition;
-    meshCoord.setAltitude(165);// cameraTargetPosition.altitude() + 30);
+    //var cameraTargetPosition = globeView.controls.getCameraTargetGeoPosition();
 
     // position and orientation of the mesh
-    mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
-    console.log(meshCoord.as(globeView.referenceCrs).xyz());
-    mesh.lookAt(new THREE.Vector3(0, 0, 0));
+    //mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
+    //mesh.lookAt(new THREE.Vector3(0, 0, 0));
     //mesh.rotateX(-Math.PI / 2);
 
-    
+
 
     // update coordinate of the mesh
     mesh.updateMatrixWorld();
@@ -203,7 +217,7 @@ function addMeshToScene() {
     globeView.camera.camera3D.layers.enable(myID);
 }
 
-globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
+/*globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
     // eslint-disable-next-line no-console
     console.info('Globe initialized');
     Promise.all(promises).then(function () {
@@ -217,20 +231,22 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
             function updateWatherLevel(value) {
                 adjustAltitude(value);
                 globeView.notifyChange(true);
-            
+
             }).blind(this)
         );
 
 
         globeView.controls.setTilt(60, true);
     });
-});
+});*/
 
 function adjustAltitude(value) {
-    /*var THREE = itowns.THREE;
-    var meshCoord = new itowns.Coordinates('EPSG:4978', globeView.mesh.position).as('EPSG:4326')
+    var THREE = itowns.THREE;
+    /*var meshCoord = new itowns.Coordinates('EPSG:4978', globeView.mesh.position).as('EPSG:4326')
     meshCoord.setAltitude(value+165);
-    globeView.mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
-    globeView.mesh.updateMatrixWorld();*/
+    globeView.mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());*/
+    //globeView.mesh.getAttribute('position');
+    modify_level(globeView.mesh.geometry.getAttribute('position'), value);
+    globeView.mesh.geometry.attributes.position.needsUpdate = true;
+    globeView.mesh.updateMatrixWorld();
 }
-
