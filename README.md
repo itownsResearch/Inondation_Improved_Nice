@@ -1,8 +1,8 @@
-<h1>Inondation</h1>
+<h1>Modélisation de l'inondation de Lyon</h1>
 
 <h2>Analyse du sujet</h2>
-Modélisation de l'inondation de Lyon
 
+Nous devons réaliser un site web pour visualiser en fonction du niveau de l'inondation de Lyon les bâtiments touché (directement ou indirectement).
 
 <h2>Implementation</h2>
 
