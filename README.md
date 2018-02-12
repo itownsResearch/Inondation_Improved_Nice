@@ -2,9 +2,9 @@
 
 <h2>Analyse du sujet</h2>
 
-Nous devons réaliser un site web pour visualiser en fonction du niveau de l'inondation de Lyon les bâtiments touché (directement ou indirectement).
+Nous devons réaliser un site web pour visualiser en fonction du niveau de l'inondation de Lyon les bâtiments touchés (directement ou indirectement).
 
-<h2>Implementation</h2>
+<h2>Implémentation</h2>
 
 - Modélisation d'une inondation pour la ville de lyon (niveau de l'eau)
 
@@ -25,7 +25,7 @@ Nous devons réaliser un site web pour visualiser en fonction du niveau de l'ino
  
 - visualisation des liens entre les bâtiments
 
-- bâtiments affecté par l'inondation (directe ou indirecte) 
+- bâtiments affectés par l'inondation (directe ou indirecte) 
 
     ex : inondation d'une centrale qui entraine une coupure d'électricité
 
@@ -35,5 +35,5 @@ Isolation des données sur les bâtiments :
 
 Fichier Feature2Mesh fonction [coordinateToPolygonExtruded](https://github.com/iTowns/itowns/blob/master/src/Renderer/ThreeExtended/Feature2Mesh.js#L241-L284)
 
-- pb 1 : les bâtiment sont tous regrouper en un mesh on a besoin d'un mesh par bâtiments pour le projet (travail sur la couleur et la mise en place de lien entre les bâtiments ou logo) et de leur lier leur propriété
+- pb 1 : les bâtiment sont tous regroupés en un seul mesh alors que nous avons besoin d'un mesh par bâtiments pour le projet (travail sur la couleur et la mise en place de lien entre les bâtiments ou logo) et de leur lier leurs propriétés
 - pb 2 : la modification du Feature2Mesh.js n'entraine aucun changement dans l'affichage. Comment faire en sorte que les changements soient pris en compte ?
