@@ -10,30 +10,30 @@ Nous devons réaliser un site web pour visualiser en fonction du niveau de l'ino
 
 - Création du menu de gestion du niveau de l'eau et des bâtiments
  - niveau de l'eau
- - affichage relatif au batiment
+ - affichage relatif au bâtiment
   - corespondance de la couleur
-  - lien entre les batiments
+  - lien entre les bâtiments
   - logo selon type
 
 - récupération des données d'un bâtiment (coordonnées, altitude minimun, type)
 
-- liste des batiments (type, couleur, lien avec les autres batiments)
+- liste des bâtiments (type, couleur, lien avec les autres bâtiments)
 
-- gestion de l'affichage des batiments
- - inonder ou non (couleur)
+- gestion de l'affichage des bâtiments
+ - inondé ou non (couleur)
  - type (couleur / logo)
  
 - visualisation des liens entre les bâtiments
 
-- bâtiments affecter par l'inondation (directe ou indirecte) 
+- bâtiments affecté par l'inondation (directe ou indirecte) 
 
     ex : inondation d'une centrale qui entraine une coupure d'électricité
 
-<h2>problèmes</h2>
+<h2>Problèmes</h2>
 
-isolation des données sur les batiments :
+Isolation des données sur les bâtiments :
 
-fichier Feature2Mesh fonction [coordinateToPolygonExtruded](https://github.com/iTowns/itowns/blob/master/src/Renderer/ThreeExtended/Feature2Mesh.js#L241-L284)
+Fichier Feature2Mesh fonction [coordinateToPolygonExtruded](https://github.com/iTowns/itowns/blob/master/src/Renderer/ThreeExtended/Feature2Mesh.js#L241-L284)
 
-- pb 1 : les bâtiment sont tous regrouper en un mesh on a besoin d'un mesh par batiments pour le projet (travail sur la couleur et la mise en place de lien entre les batiments ou logo) et de leur lier leur propriété
+- pb 1 : les bâtiment sont tous regrouper en un mesh on a besoin d'un mesh par bâtiments pour le projet (travail sur la couleur et la mise en place de lien entre les bâtiments ou logo) et de leur lier leur propriété
 - pb 2 : la modification du Feature2Mesh.js n'entraine aucun changement dans l'affichage. Comment faire en sorte que les changements soient pris en compte ?
