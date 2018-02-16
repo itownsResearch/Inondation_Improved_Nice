@@ -5,7 +5,8 @@
 var positionOnGlobe = { longitude: 4.818, latitude: 45.7354, altitude: 3000 };
 //var positionOnGlobe = { longitude: 2.3488, latitude: 48.8534, altitude: 3000 };
 var promises = [];
-
+var meshes_bati= [];
+var alti_eau;
 // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
 var viewerDiv = document.getElementById('viewerDiv');
 
@@ -91,6 +92,42 @@ function extrudeBuildings(properties) {
 function acceptFeature(properties) {
     return !!properties.hauteur;
 }
+scaler = function update(/* dt */) {
+    var i;
+    var mesh;
+    if (meshes_bati.length) {
+        globeView.notifyChange(true);
+    }
+    for (i = 0; i < meshes_bati.length; i++) {
+        mesh = meshes_bati[i];
+        if (mesh.children.length) {
+            mesh.scale.z = Math.min(1.0, mesh.scale.z + 0.016);
+            mesh.updateMatrixWorld(true);
+            if (alti_eau && mesh.minAltitude < alti_eau){
+              for (let i =0; i< mesh.children.length; i++){
+                for (let j = 0; j < mesh.children[i].geometry.attributes.color.array.length; j+=3){
+                  mesh.children[i].geometry.attributes.color.array[j] = 0;
+                  mesh.children[i].geometry.attributes.color.array[j+1] = 0;
+                  mesh.children[i].geometry.attributes.color.array[j+2] = 255;
+                }
+              }
+            }
+            else if (alti_eau && mesh.minAltitude >= alti_eau){
+              for (let i =0; i< mesh.children.length; i++){
+                for (let j = 0; j < mesh.children[i].geometry.attributes.color.array.length; j+=3){
+                  mesh.children[i].geometry.attributes.color.array[j] = 255;
+                  mesh.children[i].geometry.attributes.color.array[j+1] = 255;
+                  mesh.children[i].geometry.attributes.color.array[j+2] = 255;
+                }
+              }
+            }
+        }
+    }
+    meshes_bati = meshes_bati.filter(function filter(m) { return (m.parent)? true : false; });
+};
+console.log("2");
+globeView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
+//globeView.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
 
 globeView.addLayer({
     type: 'geometry',
@@ -99,6 +136,10 @@ globeView.addLayer({
         color: colorBuildings,
         altitude: altitudeBuildings,
         extrude: extrudeBuildings }),
+    onMeshCreated: function scaleZ(mesh) {
+        mesh.scale.z = 0.01;
+        meshes_bati.push(mesh);
+    },
     filter: acceptFeature,
     url: 'http://wxs.ign.fr/72hpsel8j8nhb5qgdh07gcyp/geoportail/wfs?',
     networkOptions: { crossOrigin: 'anonymous' },
@@ -164,7 +205,7 @@ function modify_level(attribute, alt) {
   var meshCoord2 = new itowns.Coordinates("EPSG:4326", 4.8391, 45.7242, 161.76 + alt).as(globeView.referenceCrs).xyz();
   var meshCoord3 = new itowns.Coordinates("EPSG:4326", 4.8391, 45.7582, 161.76 + alt).as(globeView.referenceCrs).xyz();
   var meshCoord4 = new itowns.Coordinates("EPSG:4326", 4.8003, 45.7582, 161.76 + alt).as(globeView.referenceCrs).xyz();
-
+  alti_eau = 161.76 + alt;
   attribute.setXYZ(0, meshCoord1.x, meshCoord1.y,  meshCoord1.z);
   attribute.setXYZ(1,  meshCoord2.x, meshCoord2.y,  meshCoord2.z);
   attribute.setXYZ(2,  meshCoord3.x, meshCoord3.y,  meshCoord3.z);
@@ -247,6 +288,7 @@ function adjustAltitude(value) {
     globeView.mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());*/
     //globeView.mesh.getAttribute('position');
     modify_level(globeView.mesh.geometry.getAttribute('position'), value);
+
     globeView.mesh.geometry.attributes.position.needsUpdate = true;
     globeView.mesh.updateMatrixWorld();
 }
