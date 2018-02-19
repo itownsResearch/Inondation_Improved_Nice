@@ -96,6 +96,7 @@ Scheduler.prototype.initDefaultProviders = function initDefaultProviders() {
     this.addProtocolProvider('wms', new WMS_Provider());
     this.addProtocolProvider('3d-tiles', new $3dTiles_Provider());
     this.addProtocolProvider('tms', new TMS_Provider());
+    this.addProtocolProvider('xyz', new TMS_Provider());
     this.addProtocolProvider('potreeconverter', PointCloudProvider);
     this.addProtocolProvider('wfs', new WFS_Provider());
     this.addProtocolProvider('rasterizer', Raster_Provider);
@@ -148,13 +149,11 @@ Scheduler.prototype.execute = function execute(command) {
         // increment before
         q.counters.executing++;
 
-        var runNow = function runNow() {
-            this.runCommand(command, q, true);
-        }.bind(this);
-
         // We use a setTimeout to defer processing but we avoid the
         // queue mechanism (why setTimeout and not Promise? see tasks vs microtasks priorities)
-        window.setTimeout(runNow, 0);
+        window.setTimeout(() => {
+            this.runCommand(command, q, true);
+        }, 0);
     } else {
         command.timestamp = Date.now();
         q.storage.queue(command);

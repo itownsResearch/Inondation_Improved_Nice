@@ -5,8 +5,14 @@ function OBB(min, max) {
     THREE.Object3D.call(this);
     this.box3D = new THREE.Box3(min.clone(), max.clone());
     this.natBox = this.box3D.clone();
-    this.update();
     this.z = { min: 0, max: 0 };
+    this.topPointsWorld = [
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+    ];
+    this.update();
 }
 
 OBB.prototype = Object.create(THREE.Object3D.prototype);
@@ -21,8 +27,7 @@ OBB.prototype.clone = function clone() {
 
 OBB.prototype.update = function update() {
     this.updateMatrixWorld(true);
-
-    this.pointsWorld = this._cPointsWorld(this._points());
+    this._cPointsWorld(this._points(this.topPointsWorld));
 };
 
 OBB.prototype.updateZ = function updateZ(min, max) {
@@ -32,26 +37,19 @@ OBB.prototype.updateZ = function updateZ(min, max) {
     this.update();
 };
 
-OBB.prototype._points = function _points() {
-    var points = [
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-    ];
-
+OBB.prototype._points = function _points(points) {
+    // top points of bounding box
     points[0].set(this.box3D.max.x, this.box3D.max.y, this.box3D.max.z);
     points[1].set(this.box3D.min.x, this.box3D.max.y, this.box3D.max.z);
     points[2].set(this.box3D.min.x, this.box3D.min.y, this.box3D.max.z);
     points[3].set(this.box3D.max.x, this.box3D.min.y, this.box3D.max.z);
-    points[4].set(this.box3D.max.x, this.box3D.max.y, this.box3D.min.z);
-    points[5].set(this.box3D.min.x, this.box3D.max.y, this.box3D.min.z);
-    points[6].set(this.box3D.min.x, this.box3D.min.y, this.box3D.min.z);
-    points[7].set(this.box3D.max.x, this.box3D.min.y, this.box3D.min.z);
+    // bottom points of bounding box
+    if (points.length > 4) {
+        points[4].set(this.box3D.max.x, this.box3D.max.y, this.box3D.min.z);
+        points[5].set(this.box3D.min.x, this.box3D.max.y, this.box3D.min.z);
+        points[6].set(this.box3D.min.x, this.box3D.min.y, this.box3D.min.z);
+        points[7].set(this.box3D.max.x, this.box3D.min.y, this.box3D.min.z);
+    }
 
     return points;
 };
@@ -124,22 +122,26 @@ OBB.extentToOBB = function extentToOBB(extent, minHeight = 0, maxHeight = 0) {
     //      7   8   3
     //      |       |
     //      6---5---4
-    tmp.cardinals[0]._values[0] = phiStart;
-    tmp.cardinals[0]._values[1] = thetaStart;
-    tmp.cardinals[1]._values[0] = phiStart + bboxDimension.x * 0.5;
-    tmp.cardinals[1]._values[1] = thetaStart;
-    tmp.cardinals[2]._values[0] = phiStart + phiLength;
-    tmp.cardinals[2]._values[1] = thetaStart;
-    tmp.cardinals[3]._values[0] = phiStart + phiLength;
-    tmp.cardinals[3]._values[1] = thetaStart + bboxDimension.y * 0.5;
-    tmp.cardinals[4]._values[0] = phiStart + phiLength;
-    tmp.cardinals[4]._values[1] = thetaStart + thetaLength;
-    tmp.cardinals[5]._values[0] = phiStart + bboxDimension.x * 0.5;
-    tmp.cardinals[5]._values[1] = thetaStart + thetaLength;
-    tmp.cardinals[6]._values[0] = phiStart;
-    tmp.cardinals[6]._values[1] = thetaStart + thetaLength;
-    tmp.cardinals[7]._values[0] = phiStart;
-    tmp.cardinals[7]._values[1] = thetaStart + bboxDimension.y * 0.5;
+    // tmp.cardinals[0]._values[0] = phiStart;
+    // tmp.cardinals[0]._values[1] = thetaStart;
+    // tmp.cardinals[0]._normal = undefined;
+
+    tmp.cardinals[0].set('EPSG:4326', phiStart, thetaStart, 0);
+    tmp.cardinals[0]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[1].set('EPSG:4326', phiStart + bboxDimension.x * 0.5, thetaStart, 0);
+    tmp.cardinals[1]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[2].set('EPSG:4326', phiStart + phiLength, thetaStart, 0);
+    tmp.cardinals[2]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[3].set('EPSG:4326', phiStart + phiLength, thetaStart + bboxDimension.y * 0.5, 0);
+    tmp.cardinals[3]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[4].set('EPSG:4326', phiStart + phiLength, thetaStart + thetaLength, 0);
+    tmp.cardinals[4]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[5].set('EPSG:4326', phiStart + bboxDimension.x * 0.5, thetaStart + thetaLength, 0);
+    tmp.cardinals[5]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[6].set('EPSG:4326', phiStart, thetaStart + thetaLength, 0);
+    tmp.cardinals[6]._internalStorageUnit = UNIT.RADIAN;
+    tmp.cardinals[7].set('EPSG:4326', phiStart, thetaStart + bboxDimension.y * 0.5, 0);
+    tmp.cardinals[7]._internalStorageUnit = UNIT.RADIAN;
 
     const cardinalsXYZ = [];
     const centersLongitude = tmp.cardinals[8].longitude(UNIT.RADIAN);
@@ -147,7 +149,7 @@ OBB.extentToOBB = function extentToOBB(extent, minHeight = 0, maxHeight = 0) {
         cardinalsXYZ.push(cardinal.as('EPSG:4978').xyz());
     }
 
-    return this.cardinalsXYZToOBB(cardinalsXYZ, centersLongitude, true, minHeight, maxHeight);
+    return this.cardinalsXYZToOBB(cardinalsXYZ, centersLongitude, true, tmp.cardinals[8].geodesicNormal, minHeight, maxHeight);
 };
 
 /**
@@ -155,16 +157,17 @@ OBB.extentToOBB = function extentToOBB(extent, minHeight = 0, maxHeight = 0) {
  * @param {Vector3[]} cardinals - 8 cardinals of the portion + the center.
  * @param {number} centerLongitude - the longitude at the center of the portion
  * @param {boolean} isEllipsoid - should be true when computing for the globe, false otherwise
+ * @param {Vector3} geodesicNormal - geodesic normal at extent's center
  * @param {number} minHeight
  * @param {number} maxHeight
  * @return {OBB}
  */
-OBB.cardinalsXYZToOBB = function cardinalsXYZToOBB(cardinals, centerLongitude, isEllipsoid, minHeight = 0, maxHeight = 0) {
+OBB.cardinalsXYZToOBB = function cardinalsXYZToOBB(cardinals, centerLongitude, isEllipsoid, geodesicNormal, minHeight = 0, maxHeight = 0) {
     tmp.maxV.set(-1000, -1000, -1000);
     tmp.minV.set(1000, 1000, 1000);
 
     let halfMaxHeight = 0;
-    tmp.normal.copy(cardinals[8]).normalize();
+    tmp.normal.copy(geodesicNormal);
     tmp.tangentPlaneAtOrigin.set(tmp.normal, 0);
 
     // Compute the rotation transforming the tile so that it's normal becomes (0, 0, 1)
@@ -191,8 +194,10 @@ OBB.cardinalsXYZToOBB = function cardinalsXYZToOBB(cardinals, centerLongitude, i
     const halfLength = Math.abs(tmp.maxV.y - tmp.minV.y) * 0.5;
     const halfWidth = Math.abs(tmp.maxV.x - tmp.minV.x) * 0.5;
 
-    const max = new THREE.Vector3(halfLength, halfWidth, halfMaxHeight);
-    const min = new THREE.Vector3(-halfLength, -halfWidth, -halfMaxHeight);
+    const nHalfSize = Math.abs(-halfMaxHeight + (minHeight - maxHeight) * 0.5);
+
+    const max = new THREE.Vector3(halfLength, halfWidth, nHalfSize);
+    const min = new THREE.Vector3(-halfLength, -halfWidth, -nHalfSize);
 
     // delta is the distance between line `([6],[4])` and the point `[5]`
     // These points [6],[5],[4] aren't aligned because of the ellipsoid shape
@@ -205,12 +210,12 @@ OBB.cardinalsXYZToOBB = function cardinalsXYZToOBB(cardinals, centerLongitude, i
     obb.translateX(tmp.translate.x);
     obb.translateY(tmp.translate.y);
     obb.translateZ(tmp.translate.z);
-    obb.update();
 
     // for 3D
     if (minHeight !== 0 || maxHeight !== 0) {
-        obb.updateZ(minHeight, maxHeight);
+        obb.translateZ(-halfMaxHeight + minHeight + nHalfSize);
     }
+
     return obb;
 };
 export default OBB;

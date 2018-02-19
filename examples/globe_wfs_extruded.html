@@ -1,0 +1,227 @@
+<html>
+    <head>
+        <title>Itowns - Globe + WFS</title>
+
+        <style type="text/css">
+            html {
+                height: 100%;
+            }
+
+            body {
+                margin: 0;
+                overflow: hidden;
+                height: 100%;
+            }
+
+            #viewerDiv {
+                margin: auto auto;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+            }
+            #menuDiv {
+                position: absolute;
+                top: 0;
+                margin-left: 0;
+            }
+            #batchInformationDiv {
+                position: absolute;
+                z-index: 0;
+                top: 0;
+                right: 0;
+                color: white;
+                color: #eee;
+                font: 11px 'Lucida Grande',sans-serif;
+                line-height: normal;
+                text-shadow: 0 -1px 0 #111;
+                padding: 0 1rem;
+                background: #1a1a1a;
+                border: 1px solid #2c2c2c;
+                opacity: 0.8;
+            }
+            #batchInformationDiv > p {
+                margin: 0.5rem 0;
+            }
+
+            #batchInformationDiv > ul {
+                padding: 0 1rem;
+            }
+            @media (max-width: 600px) {
+                #menuDiv {
+                    display: none;
+                }
+            }
+        </style>
+        <meta charset="UTF-8">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="GUI/dat.gui/dat.gui.min.js"></script>
+    </head>
+    <body>
+        <div id="viewerDiv"></div>
+        <script src="GUI/GuiTools.js"></script>
+        <script src="../dist/itowns.js"></script>
+        <script src="../dist/debug.js"></script>
+        <script type="text/javascript">
+            var renderer;
+            var exports = {};
+        </script>
+        <script src="globe_wfs_extruded.js">
+            console.log('label');
+        </script>
+        <script type="text/javascript">
+	    var selected_build=[];
+            /* global itowns, document, GuiTools, globeView, promises */
+            var menuGlobe = new GuiTools('menuDiv');
+            menuGlobe.view = globeView;
+            // Listen for globe full initialisation event
+            globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
+                // eslint-disable-next-line no-console
+                console.info('Globe initialized');
+                Promise.all(promises).then(function () {
+                    menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
+                    menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
+                    addMeshToScene();
+
+
+                    menuGlobe.gui.add({ WatherLevel: 0.0}, 'WatherLevel').min(-10.0).max(50.0).onChange((
+                        function updateWatherLevel(value) {
+                            adjustAltitude(value);
+                            checkWaterHeightForBuildings(168 + value);
+                            globeView.notifyChange(true);
+
+                        }));
+                    globeView.controls.setTilt(45, true);
+                });
+            });
+            var d = new debug.Debug(globeView, menuGlobe.gui);
+            debug.createTileDebugUI(menuGlobe.gui, globeView, globeView.wgs84TileLayer, d);
+
+            function picking(event) {
+                // Pick an object with batch id
+                var mouse = globeView.eventToNormalizedCoords(event);
+                var raycaster = new itowns.THREE.Raycaster();
+                var htmlInfo = document.getElementById('info');
+                htmlInfo.innerHTML = ' ';
+
+                raycaster.setFromCamera(mouse, globeView.camera.camera3D);
+                // calculate objects intersecting the picking ray
+		for (var i =0; i< selected_build.length; i++){
+                    let tmp_coll = colorAllObjectWithId(selected_build[i][0], selected_build[i][1], selected_build[i][2]);
+		}
+		selected_build=[];
+                var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
+
+                for (var i = 0; i < intersects.length; i++) {
+                    var interAttributes = intersects[i].object.geometry.attributes;
+                    if (interAttributes && intersects[i].object instanceof itowns.THREE.Mesh) {
+                        if (interAttributes.id) {
+                            var face = intersects[i].face.a;
+                            var id = interAttributes.id.array[face];
+                            var batchTable = intersects[i].object.parent.features[id].properties;
+                            // console.log(intersects[i], batchTable,batchTable.z_min);
+                            selected_build.push([intersects[i], id, intersects[i].object.geometry.attributes.color.array])
+                            let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
+                            selected_build[selected_build.length-1][2]=tmp_coll;
+                            Object.keys(batchTable).map(function(objectKey) {
+                                var value = batchTable[objectKey];
+                                // if the value is a integer or not
+                                var info = value.toString();
+                                htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
+                                return true;
+                            });
+                            return;
+                        }
+                    }
+                }
+                
+            }
+
+            function colorAllObjectWithId(mesh, id, color){
+		    var tmp_coll = []
+                    var interAttributes = mesh.object.geometry.attributes;
+                    var face = mesh.face.a;
+                    var id = interAttributes.id.array[face];
+                    for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
+		         if (mesh.object.geometry.attributes.id.array[i] == id){
+		           tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3])
+		           tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+1])
+		           tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+2])
+
+		           mesh.object.geometry.attributes.color.array[i*3] = color[0];
+		           mesh.object.geometry.attributes.color.array[i*3+1] = color[1];
+		           mesh.object.geometry.attributes.color.array[i*3+2] = color[2];
+		         }
+                    }
+                     mesh.object.geometry.attributes.color.needsUpdate = true; 
+                     globeView.notifyChange(true);
+		return tmp_coll;
+            }
+
+            // Dumb function as an example to color buildings under water
+            // Should obviously be done in shaders but it shows how to access building meshes attribute
+            function checkWaterHeightForBuildings(value) {
+
+                    // For all globe tile meshes we look for tile at level 14 on which building meshes are attached.
+                    for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
+
+                        globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
+                            //  console.log("ELEMENT: ", element);
+                            if (element.level != undefined && element.level == 14 && element.visible) {
+                                //console.log(element);
+                                for (var c = 0; c < element.children.length; ++c) {
+
+                                    if (element.children[c].type == "Group") {
+                                        var mesh = element.children[c].children[0].geometry;
+                                        // console.log(mesh);
+                                        for (var j = 0; j < mesh.attributes.zmin.count; ++j) {
+                                            var h = mesh.attributes.zmin.array[j]; 
+                                            if (h > 0 && h < value) {
+                                                mesh.attributes.color.array[j * 3] = 5 * (value - h);
+                                                mesh.attributes.color.array[j * 3 + 1] = 0;
+                                                mesh.attributes.color.array[j * 3 + 2] = 255;
+                                                // console.log(mesh.attributes.zmin.array[j]);
+                                                mesh.attributes.color.needsUpdate = true;
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+
+                        })
+
+                        globeView.notifyChange(true);
+                    }
+
+                }
+
+            for (const layer of globeView.getLayers()) {
+                if (layer.id === 'WFS Bus lines') {
+                    layer.whenReady.then( function _(layer) {
+                        var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                        debug.GeometryDebug.addMaterialLineWidth(gui, globeView, layer, 1, 10);
+                    });
+                }
+                if (layer.id === 'WFS Buildings') {
+                    layer.whenReady.then( function _(layer) {
+                        var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                        debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
+                        window.addEventListener('mousemove', picking, false);
+                    });
+                }
+                if (layer.id === 'WFS Route points') {
+                    layer.whenReady.then( function _(layer) {
+                        var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                        debug.GeometryDebug.addMaterialSize(gui, globeView, layer, 1, 50);
+                    });
+                }
+            }
+        </script>
+        <div id="batchInformationDiv">
+            <p><b>Information Batiment</b></p>
+            <ul id="info">
+            </ul>
+        </div>
+    </body>
+</html>

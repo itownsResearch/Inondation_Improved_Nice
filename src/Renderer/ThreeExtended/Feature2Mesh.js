@@ -56,24 +56,46 @@ function fillColorArray(colors, offset, length, r, g, b) {
  * @param  {number | number[] } altitude - Altitude of the feature
  * @return {Vector3[]} vertices
  */
+const vec = new THREE.Vector3();
 function coordinatesToVertices(contour, altitude, target, offset) {
     let i = 0;
     // loop over contour coodinates
     for (const coordinate of contour) {
         // convert coordinate to position
-        const vec = coordinate.xyz();
+        coordinate.xyz(vec);
         // get the normal vector.
         const normal = coordinate.geodesicNormal;
         // get altitude from array or constant
         const alti = Array.isArray(altitude) ? altitude[i++] : altitude;
         // move the vertex following the normal, to put the point on the good altitude
-        vec.add(normal.clone().multiplyScalar(alti));
+        vec.addScaledVector(normal, alti);
         // fill the vertices array at the offset position
         vec.toArray(target, offset);
         // increment the offset
         offset += 3;
     }
 }
+
+const vecTop = new THREE.Vector3();
+const vecBottom = new THREE.Vector3();
+function coordinatesToExtrudedVertices(contour, top, bottom, target, offset) {
+    // loop over contour coodinates
+    const slgt = contour.length * 3;
+    for (const coordinate of contour) {
+        // convert coordinate to position
+        coordinate.xyz(vecTop);
+        vecBottom.copy(vecTop);
+        // move the vertex following the normal, to put the point on the good altitude
+        vecTop.addScaledVector(coordinate.geodesicNormal, top);
+        vecBottom.addScaledVector(coordinate.geodesicNormal, bottom);
+        // fill the vertices array at the offset position
+        vecTop.toArray(target, offset);
+        vecBottom.toArray(target, slgt + offset);
+        // increment the offset
+        offset += 3;
+    }
+}
+
 
 /*
  * Helper function to extract, for a given feature id, the feature contour coordinates, and its properties.
@@ -220,6 +242,8 @@ function coordinateToPolygonExtruded(coordinates, properties, options) {
     const indices = [];
     const vertices = new Float32Array(2 * 3 * coordinates.coordinates.length);
     const colors = new Uint8Array(3 * 2 * coordinates.coordinates.length);
+    const ids = new Uint16Array(2 * coordinates.coordinates.length);
+    const zmins = new Uint16Array(2 * coordinates.coordinates.length);
     const geometry = new THREE.BufferGeometry();
     let offset = 0;
     let offset2 = 0;
@@ -236,7 +260,7 @@ function coordinateToPolygonExtruded(coordinates, properties, options) {
         // altitudeTopFace is the altitude of the visible top face.
         const altitudeTopFace = altitudeBottom + extrudeAmount;
         // add vertices of the top face
-        coordinatesToVertices(contour, altitudeTopFace, vertices, offset2);
+        coordinatesToExtrudedVertices(contour, altitudeTopFace, altitudeBottom, vertices, offset2);
         // triangulate the top face
         nbVertices = contour.length * 3;
         const verticesTopFace = vertices.slice(offset2, offset2 + nbVertices);
@@ -244,11 +268,12 @@ function coordinateToPolygonExtruded(coordinates, properties, options) {
         for (const indice of triangles) {
             indices.push(offset + indice);
         }
-        offset2 += nbVertices;
-        // add vertices of the bottom face
-        coordinatesToVertices(contour, altitudeBottom, vertices, offset2);
-        offset2 += nbVertices;
-        // add indices to make the side faces
+        const ofid = Math.floor(offset2 / 3);
+        for (let i = ofid; i < contour.length + ofid; ++i) {
+            ids[i] = property._idx;
+            zmins[i] = property.z_min;
+        }
+        offset2 += nbVertices * 2;
         addFaces(indices, contour.length, offset);
         // assign color to each point
         const color = getColor(options, property);
@@ -259,6 +284,8 @@ function coordinateToPolygonExtruded(coordinates, properties, options) {
     }
     geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3, true));
+    geometry.addAttribute('id', new THREE.BufferAttribute(ids, 1));
+    geometry.addAttribute('zmin', new THREE.BufferAttribute(zmins, 1));
     geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices), 1));
     const result = new THREE.Mesh(geometry);
     result.minAltitude = minAltitude;
