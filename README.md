@@ -1,88 +1,40 @@
+<h1>Modélisation de l'inondation de Lyon</h1>
 
-<p align="center">
-<img src="https://raw.githubusercontent.com/iTowns/itowns.github.io/master/images/itowns_logo_300x134.png" />
-</p>
+<h2>Analyse du sujet</h2>
 
-## What is it?
+Nous devons réaliser un site web pour visualiser en fonction du niveau de l'inondation de Lyon les bâtiments touchés (directement ou indirectement).
 
-iTowns is a [Three.js](https://threejs.org/)-based framework written in Javascript/WebGL for visualizing 3D geospatial data.
+<h2>Implémentation</h2>
 
-It can connect to WMS/WMTS/TMS servers including elevation data and load many different data formats (3dTiles, gpx, KML and much much more).
+- Modélisation d'une inondation pour la ville de lyon (niveau de l'eau)
 
-iTowns has been redesigned from this [early version](https://github.com/iTowns/itowns-legacy).
+- Création du menu de gestion du niveau de l'eau et des bâtiments
+ - niveau de l'eau
+ - affichage relatif au bâtiment
+  - corespondance de la couleur
+  - lien entre les bâtiments
+  - logo selon type
 
-![iTowns screenshot](https://raw.githubusercontent.com/iTowns/itowns.github.io/master/images/itownsReleaseXS.jpg)
+- récupération des données d'un bâtiment (coordonnées, altitude minimun, type)
 
-## API documentation and examples
-**[API Documentation](http://www.itowns-project.org/itowns/API_Doc/)**
+- liste des bâtiments (type, couleur, lien avec les autres bâtiments)
 
+- gestion de l'affichage des bâtiments
+ - inondé ou non (couleur)
+ - type (couleur / logo)
+ 
+- visualisation des liens entre les bâtiments
 
-**Examples**
+- bâtiments affectés par l'inondation (directe ou indirecte) 
 
-- [Globe](http://www.itowns-project.org/itowns/examples/globe.html)
-- [Plane](http://www.itowns-project.org/itowns/examples/planar.html)
-- [Scene postprocessing](http://www.itowns-project.org/itowns/examples/postprocessing.html)
-- [3dtiles](http://www.itowns-project.org/itowns/examples/3dtiles.html)
+    ex : inondation d'une centrale qui entraine une coupure d'électricité
 
+<h2>Problèmes</h2>
 
+Isolation des données sur les bâtiments : ! Problèmes résolus !
 
-## How to use Itowns in your project
+Fichier Feature2Mesh fonction [coordinateToPolygonExtruded](https://github.com/iTowns/itowns/blob/master/src/Renderer/ThreeExtended/Feature2Mesh.js#L241-L284)
 
-You can use it through npm (the preferred way) or download a bundle from our github release page.
-
-### With NPM
-
-In your project:
-
-```bash
-npm install --save itowns
-```
-This package contains the ES5-compatible sources of Itowns.
-
-If you're using a module bundler (like wepback), you can directly `require('itowns')` in your code.
-
-Alternatively, we provide a bundle you can directly include in your html files that exposes `itowns` in  `window`:
-```html
-<script src="node_modules/itowns/dist/itowns.js"></script>
-```
-
-**/!\ Please note that this bundle also contains the dependencies**.
-
-### From a release bundle
-
-See our [release page](https://github.com/iTowns/itowns/releases).
-
-
-## Supported data types
-
-- Imagery from WMTS/WMS/TMS
-- Elevation (DTM/DSM) from WMTS
-- 3D Tiles 
-
-
-## Licence
-
-iTowns V2 is dual-licenced under Cecill-B V1.0 and MIT.
-Incorporated libraries are published under their original licences.
-
-See [LICENSE.md](LICENSE.md) for more information.
-
-## Contributors
-
-iTowns has received contributions from people listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
-If you are interested in contributing to iTowns, please read [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Support
-
-iTowns is an original work from French IGN, MATIS research laboratory.
-It has been funded through various research programs involving the French National Research Agency, Cap Digital, UPMC, Mines ParisTec, CNRS, LCPC.
-
-iTowns is currently maintained by IGN ( http://www.ign.fr ), Oslandia ( http://www.oslandia.com ) and AtolCD ( https://www.atolcd.com )
-
-<p align="center">
-<a href="http://www.ign.fr"><img src="https://raw.githubusercontent.com/iTowns/itowns.github.io/master/images/logo_ign.png" height="150" /></a>&nbsp;
-<a href="http://www.oslandia.com"><img src="https://raw.githubusercontent.com/iTowns/itowns.github.io/master/images/logo_oslandia.png" height="150" /></a>&nbsp;
-<a href="https://www.atolcd.com"><img src="https://raw.githubusercontent.com/iTowns/itowns.github.io/master/images/logo_atolcd.jpg" height="150" /></a>&nbsp;
-</p>
-
+- pb 1 : les bâtiment sont tous regroupés en un seul mesh alors que nous avons besoin d'un mesh par bâtiments pour le projet (travail sur la couleur et la mise en place de lien entre les bâtiments ou logo) et de leur lier leurs propriétés
+- pb 2 : la modification du Feature2Mesh.js n'entraine aucun changement dans l'affichage. Comment faire en sorte que les changements soient pris en compte ?
 
