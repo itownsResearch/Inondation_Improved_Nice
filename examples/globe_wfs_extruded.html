@@ -111,17 +111,18 @@
 		}
 		selected_build=[];
                 var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
-
                 for (var i = 0; i < intersects.length; i++) {
                     var interAttributes = intersects[i].object.geometry.attributes;
                     if (interAttributes && intersects[i].object instanceof itowns.THREE.Mesh) {
                         if (interAttributes.id) {
+                            console.log(intersects[i]);
                             var face = intersects[i].face.a;
                             var id = interAttributes.id.array[face];
                             var batchTable = intersects[i].object.parent.features[id].properties;
                             // console.log(intersects[i], batchTable,batchTable.z_min);
-                            selected_build.push([intersects[i], id, intersects[i].object.geometry.attributes.color.array])
+                            selected_build.push([intersects[i], id, []])
                             let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
+                            let coord_moy = coordsMoyAllObjectWithId(intersects[i], id);
                             selected_build[selected_build.length-1][2]=tmp_coll;
                             Object.keys(batchTable).map(function(objectKey) {
                                 var value = batchTable[objectKey];
@@ -130,6 +131,7 @@
                                 htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
                                 return true;
                             });
+                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ coord_moy[2] +']</li>';
                             return;
                         }
                     }
@@ -138,33 +140,44 @@
             }
 
             function colorAllObjectWithId(mesh, id, color){
-		    var tmp_coll = []
-                    var interAttributes = mesh.object.geometry.attributes;
-                    var face = mesh.face.a;
-                    var id = interAttributes.id.array[face];
-                    for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
-		         if (mesh.object.geometry.attributes.id.array[i] == id){
-		           tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3])
-		           tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+1])
-		           tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+2])
+		        var tmp_coll = []
+                for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
+                    if (mesh.object.geometry.attributes.id.array[i] == id){
+                        tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3])
+                        tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+1])
+                        tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+2])
 
-		           mesh.object.geometry.attributes.color.array[i*3] = color[0];
-		           mesh.object.geometry.attributes.color.array[i*3+1] = color[1];
-		           mesh.object.geometry.attributes.color.array[i*3+2] = color[2];
-		         }
+                        mesh.object.geometry.attributes.color.array[i*3] = color[0];
+                        mesh.object.geometry.attributes.color.array[i*3+1] = color[1];
+                        mesh.object.geometry.attributes.color.array[i*3+2] = color[2];
                     }
-                     mesh.object.geometry.attributes.color.needsUpdate = true; 
-                     globeView.notifyChange(true);
-		return tmp_coll;
+                }
+                mesh.object.geometry.attributes.color.needsUpdate = true; 
+                globeView.notifyChange(true);
+		        return tmp_coll;
             }
-
+            function coordsMoyAllObjectWithId(mesh, id){
+                var tmp_coord = [0, 0, 0]
+                var count = 0;
+                for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
+                    if (mesh.object.geometry.attributes.id.array[i] == id){
+                        tmp_coord[0] = mesh.object.geometry.attributes.position.array[i*3];
+                        tmp_coord[1] = mesh.object.geometry.attributes.position.array[i*3+1];
+                        tmp_coord[2] = mesh.object.geometry.attributes.position.array[i*3+2];
+                        count++;
+                    }
+                }
+                tmp_coord[0] /=count;
+                tmp_coord[1] /=count;
+                tmp_coord[2] /=count;
+		        return tmp_coord;
+            }
             // Dumb function as an example to color buildings under water
             // Should obviously be done in shaders but it shows how to access building meshes attribute
             function checkWaterHeightForBuildings(value) {
 
                     // For all globe tile meshes we look for tile at level 14 on which building meshes are attached.
                     for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
-
                         globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
                             //  console.log("ELEMENT: ", element);
                             if (element.level != undefined && element.level == 14 && element.visible) {
