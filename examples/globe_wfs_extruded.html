@@ -102,6 +102,9 @@
                 var raycaster = new itowns.THREE.Raycaster();
                 var htmlInfo = document.getElementById('info');
                 htmlInfo.innerHTML = ' ';
+		
+		var a = globeView.scene.getObjectByName("test");
+		if (a) globeView.scene.remove(a);
 
                 raycaster.setFromCamera(mouse, globeView.camera.camera3D);
                 // calculate objects intersecting the picking ray
@@ -131,6 +134,9 @@
                                 return true;
                             });
                             htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ coord_moy[2] +']</li>';
+                            //coord_moy[2]+=50;
+                            coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
+                            addMarqueur(coord_moy, intersects[i].object.parent);
                             return;
                         }
                     }
@@ -185,7 +191,6 @@
 
                                     if (element.children[c].type == "Group") {
                                         var mesh = element.children[c].children[0].geometry;
-                                        // console.log(mesh);
                                         for (var j = 0; j < mesh.attributes.zmin.count; ++j) {
                                             var h = mesh.attributes.zmin.array[j]; 
                                             if (h > 0 && h < value) {
@@ -228,6 +233,31 @@
                         debug.GeometryDebug.addMaterialSize(gui, globeView, layer, 1, 50);
                     });
                 }
+            }
+            function addMarqueur(coords, parent) {
+                // creation of the new mesh (a cylinder)
+                //console.log("e");
+                var THREE = itowns.THREE;
+                var geometry = new THREE.CylinderGeometry(0, 10, 60, 8);
+                var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                var mesh = new THREE.Mesh(geometry, material);
+
+                // get the position on the globe, from the camera
+                
+                // position of the mesh
+                var meshCoord = new THREE.Vector3(coords[0], coords[1], coords[2]);
+
+                // position and orientation of the mesh
+                mesh.name="test";
+                mesh.position.copy(meshCoord);
+                mesh.lookAt(new THREE.Vector3(0, 0, 0));
+                mesh.rotateX(Math.PI / 2);
+
+                // update coordinate of the mesh
+                mesh.updateMatrixWorld();
+                //console.log(mesh);
+                // add the mesh to the scene
+                globeView.scene.add(mesh);
             }
         </script>
         <div id="batchInformationDiv">
