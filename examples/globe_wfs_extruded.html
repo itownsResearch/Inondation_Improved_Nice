@@ -103,15 +103,15 @@
                 var htmlInfo = document.getElementById('info');
                 htmlInfo.innerHTML = ' ';
 		
-		var a = globeView.scene.getObjectByName("test");
-		if (a) globeView.scene.remove(a);
+		        var a = globeView.scene.getObjectByName("test");
+		        if (a) globeView.scene.remove(a);
 
                 raycaster.setFromCamera(mouse, globeView.camera.camera3D);
                 // calculate objects intersecting the picking ray
-		for (var i =0; i< selected_build.length; i++){
+                for (var i =0; i< selected_build.length; i++){
                     let tmp_coll = colorAllObjectWithId(selected_build[i][0], selected_build[i][1], selected_build[i][2]);
-		}
-		selected_build=[];
+                }
+                selected_build=[];
                 var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
                 for (var i = 0; i < intersects.length; i++) {
                     var interAttributes = intersects[i].object.geometry.attributes;
@@ -135,7 +135,7 @@
                             });
                             htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ coord_moy[2] +']</li>';
                             //coord_moy[2]+=50;
-                            coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
+                            //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
                             addMarqueur(coord_moy, intersects[i].object.parent);
                             return;
                         }
@@ -166,9 +166,11 @@
                 var count = 0;
                 for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
                     if (mesh.object.geometry.attributes.id.array[i] == id){
-                        tmp_coord[0] = mesh.object.geometry.attributes.position.array[i*3];
-                        tmp_coord[1] = mesh.object.geometry.attributes.position.array[i*3+1];
-                        tmp_coord[2] = mesh.object.geometry.attributes.position.array[i*3+2];
+                        //console.log(mesh.object.pos[i]);
+                        const coordinates = mesh.object.pos[i].as('EPSG:4326');  // Geographic system
+                        tmp_coord[0] += coordinates.latitude();
+                        tmp_coord[1] += coordinates.longitude();
+                        tmp_coord[2] += coordinates.altitude();
                         count++;
                     }
                 }
@@ -199,7 +201,13 @@
                                                 mesh.attributes.color.array[j * 3 + 2] = 255;
                                                 // console.log(mesh.attributes.zmin.array[j]);
                                                 mesh.attributes.color.needsUpdate = true;
-                                            }
+                                            }else{
+                                                mesh.attributes.color.array[j * 3] = 255;
+                                                mesh.attributes.color.array[j * 3 + 1] = 255;
+                                                mesh.attributes.color.array[j * 3 + 2] = 255;
+                                                // console.log(mesh.attributes.zmin.array[j]);
+                                                mesh.attributes.color.needsUpdate = true;
+					   }
                                         }
                                     }
                                 }
@@ -220,13 +228,13 @@
                         debug.GeometryDebug.addMaterialLineWidth(gui, globeView, layer, 1, 10);
                     });
                 }
-                // if (layer.id === 'WFS Buildings') {
-                //     layer.whenReady.then( function _(layer) {
+                if (layer.id === 'WFS Buildings') {
+                     layer.whenReady.then( function _(layer) {
                 //         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
                 //         debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
-                //         window.addEventListener('mousemove', picking, false);
-                //     });
-                // }
+                         window.addEventListener('mousemove', picking, false);
+                     });
+                }
                 if (layer.id === 'WFS Route points') {
                     layer.whenReady.then( function _(layer) {
                         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
@@ -245,11 +253,12 @@
                 // get the position on the globe, from the camera
                 
                 // position of the mesh
-                var meshCoord = new THREE.Vector3(coords[0], coords[1], coords[2]);
-
+                //var meshCoord = new THREE.Vector3(coords[0], coords[1], coords[2]);
+                var meshCoord = new itowns.Coordinates('EPSG:4326', coords[1], coords[0], 250);
+                console.log(meshCoord.as(globeView.referenceCrs));
                 // position and orientation of the mesh
                 mesh.name="test";
-                mesh.position.copy(meshCoord);
+                mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
                 mesh.lookAt(new THREE.Vector3(0, 0, 0));
                 mesh.rotateX(Math.PI / 2);
 

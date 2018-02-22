@@ -94,11 +94,11 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').th
 // }, globeView.tileLayer);
 
 function colorBuildings(properties) {
-    if (properties.id.indexOf('bati_remarquable') === 0) {
+   /* if (properties.id.indexOf('bati_remarquable') === 0) {
         return new itowns.THREE.Color(0x5555ff);
     } else if (properties.id.indexOf('bati_industriel') === 0) {
         return new itowns.THREE.Color(0xff5555);
-    }
+    }*/
     return new itowns.THREE.Color(0xeeeeee);
 }
 
