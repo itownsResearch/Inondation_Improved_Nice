@@ -74,28 +74,27 @@
             /* global itowns, document, GuiTools, globeView, promises */
             var menuGlobe = new GuiTools('menuDiv');
             menuGlobe.view = globeView;
-            // Listen for globe full initialisation event
+
+            
+            //Listen for globe full initialisation event
             globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
                 Promise.all(promises).then(function () {
-                    menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
-                    menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
+                    //menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
+                    //menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
                     addMeshToScene();
-
-
                     menuGlobe.gui.add({ WatherLevel: 0.0}, 'WatherLevel').min(-10.0).max(50.0).onChange((
                         function updateWatherLevel(value) {
                             adjustAltitude(value);
                             checkWaterHeightForBuildings(168 + value);
                             globeView.notifyChange(true);
-
                         }));
                     globeView.controls.setTilt(45, true);
                 });
             });
-            var d = new debug.Debug(globeView, menuGlobe.gui);
-            debug.createTileDebugUI(menuGlobe.gui, globeView, globeView.wgs84TileLayer, d);
+            //var d = new debug.Debug(globeView, menuGlobe.gui);
+            //debug.createTileDebugUI(menuGlobe.gui, globeView, globeView.wgs84TileLayer, d);
 
             function picking(event) {
                 // Pick an object with batch id
@@ -216,13 +215,13 @@
                         debug.GeometryDebug.addMaterialLineWidth(gui, globeView, layer, 1, 10);
                     });
                 }
-                if (layer.id === 'WFS Buildings') {
-                    layer.whenReady.then( function _(layer) {
-                        var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
-                        debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
-                        window.addEventListener('mousemove', picking, false);
-                    });
-                }
+                // if (layer.id === 'WFS Buildings') {
+                //     layer.whenReady.then( function _(layer) {
+                //         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                //         debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
+                //         window.addEventListener('mousemove', picking, false);
+                //     });
+                // }
                 if (layer.id === 'WFS Route points') {
                     layer.whenReady.then( function _(layer) {
                         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
