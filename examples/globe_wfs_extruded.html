@@ -70,6 +70,25 @@
             console.log('label');
         </script>
         <script type="text/javascript">
+
+
+        var elements_lies = {
+            "bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
+            "bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
+            "bati_industriel.2339424" :["bati_indifferencie.3616112"],
+            "bati_indifferencie.28964625" :["bati_indifferencie.3616112"], 
+            "bati_indifferencie.3672662" :["bati_indifferencie.3616112"], 
+            "bati_indifferencie.3672661" :["bati_indifferencie.3616112"],
+            "bati_industriel.284404" :["bati_indifferencie.3616112"],
+            "bati_industriel.284403" :["bati_indifferencie.3616112"],
+            "bati_indifferencie.4127882" :["bati_indifferencie.3616112"]
+        }
+
+
+        console.log(elements_lies);
+
+
+
 	    var selected_build=[];
             /* global itowns, document, GuiTools, globeView, promises */
             var menuGlobe = new GuiTools('menuDiv');
@@ -144,6 +163,55 @@
                 
             }
 
+            function picking2(event) {
+                // Pick an object with batch id
+                var mouse = globeView.eventToNormalizedCoords(event);
+                var raycaster = new itowns.THREE.Raycaster();
+                var htmlInfo = document.getElementById('info');
+                htmlInfo.innerHTML = ' ';
+		
+		        var a = globeView.scene.getObjectByName("test");
+		        if (a) globeView.scene.remove(a);
+
+                raycaster.setFromCamera(mouse, globeView.camera.camera3D);
+                // calculate objects intersecting the picking ray
+                for (var i =0; i< selected_build.length; i++){
+                    let tmp_coll = colorAllObjectWithId(selected_build[i][0], selected_build[i][1], selected_build[i][2]);
+                }
+                selected_build=[];
+                var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
+                for (var i = 0; i < intersects.length; i++) {
+                    var interAttributes = intersects[i].object.geometry.attributes;
+                    if (interAttributes && intersects[i].object instanceof itowns.THREE.Mesh) {
+                        if (interAttributes.id) {
+                            //console.log(intersects[i]);
+                            var face = intersects[i].face.a;
+                            var id = interAttributes.id.array[face];
+                            var batchTable = intersects[i].object.parent.features[id].properties;
+                            console.log(batchTable.id);
+                            /*// console.log(intersects[i], batchTable,batchTable.z_min);
+                            selected_build.push([intersects[i], id, []])
+                            let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
+                            let coord_moy = coordsMoyAllObjectWithId(intersects[i].object, id);
+                            selected_build[selected_build.length-1][2]=tmp_coll;
+                            Object.keys(batchTable).map(function(objectKey) {
+                                var value = batchTable[objectKey];
+                                // if the value is a integer or not
+                                var info = value.toString();
+                                htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
+                                return true;
+                            });
+                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
+                            coord_moy[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
+                            //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
+                            addMarqueur(coord_moy, 0xff0000, "test");*/
+                            return;
+                        }
+                    }
+                }
+                
+            }
+
             function colorAllObjectWithId(mesh, id, color){
 		        var tmp_coll = []
                 for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
@@ -182,7 +250,7 @@
             // Dumb function as an example to color buildings under water
             // Should obviously be done in shaders but it shows how to access building meshes attribute
             function checkWaterHeightForBuildings(value) {
-
+                    console.log("e");
                     // For all globe tile meshes we look for tile at level 14 on which building meshes are attached.
                     for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
                         globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
@@ -207,13 +275,27 @@
                                                 if (h > 0 && h < value) {
                                                     var coord = coordsMoyAllObjectWithId(mesh, id);
                                                     coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
-                                                    console.log(coord);
-                                                    addMarqueur(coord, 0xffff00, "test2");
+                                                    var a = globeView.scene.getObjectByName("test2");
+		                                            if (!a) addMarqueur(coord, 0xffff00, "test2");
                                                 } else {
                                                     var a = globeView.scene.getObjectByName("test2");
 		                                            if (a) globeView.scene.remove(a);
                                                 }
-                                            }else{
+                                            } else if (elements_lies[parent.features[id].properties.id] && lier(parent.features[id].properties.id, "bati_indifferencie.3616112")){
+                                                var b = globeView.scene.getObjectByName("test2"); 
+                                                if (b) {
+                                                    mesh.geometry.attributes.color.array[j * 3] = 0;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                    mesh.geometry.attributes.color.needsUpdate = true;
+                                                }else{
+                                                    mesh.geometry.attributes.color.array[j * 3] = 0;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
+                                                    mesh.geometry.attributes.color.needsUpdate = true;
+                                                }
+                                            }
+                                            else{
                                                 var h = mesh.geometry.attributes.zmin.array[j]; 
                                                 if (h > 0 && h < value) {
                                                     mesh.geometry.attributes.color.array[j * 3] = 5 * (value - h);
@@ -253,6 +335,7 @@
                 //         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
                 //         debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
                          window.addEventListener('mousemove', picking, false);
+                         window.addEventListener('click', picking2, false);
                      });
                 }
                 if (layer.id === 'WFS Route points') {
@@ -287,6 +370,14 @@
                 //console.log(mesh);
                 // add the mesh to the scene
                 globeView.scene.add(mesh);
+            }
+            function lier(clef, value){
+                for (var t = 0; t<elements_lies[clef].length; t++){
+                    if(elements_lies[clef][t]==value){
+                        return true;
+                    }
+                }
+                return false;
             }
         </script>
         <div id="batchInformationDiv">
