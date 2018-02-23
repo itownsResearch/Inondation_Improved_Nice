@@ -72,7 +72,7 @@
         <script type="text/javascript">
 
 
-        var elements_lies = {
+        var elements_lies = { // batiment enfant, batiment parent = principale
             "bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
             "bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
             "bati_industriel.2339424" :["bati_indifferencie.3616112"],
@@ -110,6 +110,7 @@
                             globeView.notifyChange(true);
                         }));
                     globeView.controls.setTilt(45, true);
+                    checkWaterHeightForBuildings(168);
                 });
             });
             //var d = new debug.Debug(globeView, menuGlobe.gui);
