@@ -243,13 +243,13 @@ function coordinateToPolygonExtruded(coordinates, properties, options) {
     const vertices = new Float32Array(2 * 3 * coordinates.coordinates.length);
     const colors = new Uint8Array(3 * 2 * coordinates.coordinates.length);
     const ids = new Uint16Array(2 * coordinates.coordinates.length);
-    var pos = [];
     const zmins = new Uint16Array(2 * coordinates.coordinates.length);
     const geometry = new THREE.BufferGeometry();
     let offset = 0;
     let offset2 = 0;
     let nbVertices = 0;
     let minAltitude = Infinity;
+    var pos = [];
     /* eslint-disable-next-line */
     for (const id in coordinates.featureVertices) {
         // extract contour coodinates and properties of one feature
@@ -287,7 +287,7 @@ function coordinateToPolygonExtruded(coordinates, properties, options) {
     geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3, true));
     geometry.addAttribute('id', new THREE.BufferAttribute(ids, 1));
-    geometry.addAttribute('zmin', new THREE.BufferAttribute(zmins, 3));
+    geometry.addAttribute('zmin', new THREE.BufferAttribute(zmins, 1));
     geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices), 1));
     const result = new THREE.Mesh(geometry);
     result.minAltitude = minAltitude;

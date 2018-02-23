@@ -117,14 +117,14 @@
                     var interAttributes = intersects[i].object.geometry.attributes;
                     if (interAttributes && intersects[i].object instanceof itowns.THREE.Mesh) {
                         if (interAttributes.id) {
-                            console.log(intersects[i]);
+                            //console.log(intersects[i]);
                             var face = intersects[i].face.a;
                             var id = interAttributes.id.array[face];
                             var batchTable = intersects[i].object.parent.features[id].properties;
                             // console.log(intersects[i], batchTable,batchTable.z_min);
                             selected_build.push([intersects[i], id, []])
                             let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
-                            let coord_moy = coordsMoyAllObjectWithId(intersects[i], id);
+                            let coord_moy = coordsMoyAllObjectWithId(intersects[i].object, id);
                             selected_build[selected_build.length-1][2]=tmp_coll;
                             Object.keys(batchTable).map(function(objectKey) {
                                 var value = batchTable[objectKey];
@@ -133,10 +133,10 @@
                                 htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
                                 return true;
                             });
-                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ coord_moy[2] +']</li>';
-                            //coord_moy[2]+=50;
+                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
+                            coord_moy[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
                             //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
-                            addMarqueur(coord_moy, intersects[i].object.parent);
+                            addMarqueur(coord_moy, 0xff0000, "test");
                             return;
                         }
                     }
@@ -164,10 +164,10 @@
             function coordsMoyAllObjectWithId(mesh, id){
                 var tmp_coord = [0, 0, 0]
                 var count = 0;
-                for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
-                    if (mesh.object.geometry.attributes.id.array[i] == id){
-                        //console.log(mesh.object.pos[i]);
-                        const coordinates = mesh.object.pos[i].as('EPSG:4326');  // Geographic system
+                for(var i=0; i< mesh.geometry.attributes.id.array.length; ++i){      
+                    if (mesh.geometry.attributes.id.array[i] == id){
+                        //console.log(mesh.pos[i]);
+                        const coordinates = mesh.pos[i].as('EPSG:4326');  // Geographic system
                         tmp_coord[0] += coordinates.latitude();
                         tmp_coord[1] += coordinates.longitude();
                         tmp_coord[2] += coordinates.altitude();
@@ -192,22 +192,42 @@
                                 for (var c = 0; c < element.children.length; ++c) {
 
                                     if (element.children[c].type == "Group") {
-                                        var mesh = element.children[c].children[0].geometry;
-                                        for (var j = 0; j < mesh.attributes.zmin.count; ++j) {
-                                            var h = mesh.attributes.zmin.array[j]; 
-                                            if (h > 0 && h < value) {
-                                                mesh.attributes.color.array[j * 3] = 5 * (value - h);
-                                                mesh.attributes.color.array[j * 3 + 1] = 0;
-                                                mesh.attributes.color.array[j * 3 + 2] = 255;
-                                                // console.log(mesh.attributes.zmin.array[j]);
-                                                mesh.attributes.color.needsUpdate = true;
+                                        var parent = element.children[c];
+                                        var mesh = element.children[c].children[0];
+                                        for (var j = 0; j < mesh.geometry.attributes.zmin.count; ++j) {
+                                            let id = mesh.geometry.attributes.id.array[j];
+                                            if (parent.features[id].properties.id == "bati_indifferencie.3616112"){
+                                                //console.log(id);
+                                                //console.log(parent.features[id].properties);
+                                                mesh.geometry.attributes.color.array[j * 3] = 255;
+                                                mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
+                                                mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
+                                                mesh.geometry.attributes.color.needsUpdate = true;
+                                                var h = mesh.geometry.attributes.zmin.array[j]; 
+                                                if (h > 0 && h < value) {
+                                                    var coord = coordsMoyAllObjectWithId(mesh, id);
+                                                    coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+                                                    console.log(coord);
+                                                    addMarqueur(coord, 0xffff00, "test2");
+                                                } else {
+                                                    var a = globeView.scene.getObjectByName("test2");
+		                                            if (a) globeView.scene.remove(a);
+                                                }
                                             }else{
-                                                mesh.attributes.color.array[j * 3] = 255;
-                                                mesh.attributes.color.array[j * 3 + 1] = 255;
-                                                mesh.attributes.color.array[j * 3 + 2] = 255;
-                                                // console.log(mesh.attributes.zmin.array[j]);
-                                                mesh.attributes.color.needsUpdate = true;
-					   }
+                                                var h = mesh.geometry.attributes.zmin.array[j]; 
+                                                if (h > 0 && h < value) {
+                                                    mesh.geometry.attributes.color.array[j * 3] = 5 * (value - h);
+                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                    mesh.geometry.attributes.color.needsUpdate = true;
+                                                }else{
+                                                    mesh.geometry.attributes.color.array[j * 3] = 255;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                    mesh.geometry.attributes.color.needsUpdate = true;
+                                                }
+                                            }
+                                            
                                         }
                                     }
                                 }
@@ -242,25 +262,25 @@
                     });
                 }
             }
-            function addMarqueur(coords, parent) {
+            function addMarqueur(coords, color, name) {
                 // creation of the new mesh (a cylinder)
                 //console.log("e");
                 var THREE = itowns.THREE;
-                var geometry = new THREE.CylinderGeometry(0, 10, 60, 8);
-                var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                var geometry = new THREE.CylinderGeometry(20, 20, 3, 8);
+                var material = new THREE.MeshBasicMaterial({ color: color });
                 var mesh = new THREE.Mesh(geometry, material);
 
                 // get the position on the globe, from the camera
                 
                 // position of the mesh
                 //var meshCoord = new THREE.Vector3(coords[0], coords[1], coords[2]);
-                var meshCoord = new itowns.Coordinates('EPSG:4326', coords[1], coords[0], 250);
-                console.log(meshCoord.as(globeView.referenceCrs));
+                var meshCoord = new itowns.Coordinates('EPSG:4326', coords[1], coords[0], coords[2]);
+                //console.log(meshCoord.as(globeView.referenceCrs));
                 // position and orientation of the mesh
-                mesh.name="test";
+                mesh.name=name;
                 mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
                 mesh.lookAt(new THREE.Vector3(0, 0, 0));
-                mesh.rotateX(Math.PI / 2);
+                //mesh.rotateX(Math.PI / 2);
 
                 // update coordinate of the mesh
                 mesh.updateMatrixWorld();
