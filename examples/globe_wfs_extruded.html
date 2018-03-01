@@ -1,57 +1,7 @@
 <html>
     <head>
         <title>Itowns - Globe + WFS</title>
-
-        <style type="text/css">
-            html {
-                height: 100%;
-            }
-
-            body {
-                margin: 0;
-                overflow: hidden;
-                height: 100%;
-            }
-
-            #viewerDiv {
-                margin: auto auto;
-                width: 100%;
-                height: 100%;
-                padding: 0;
-            }
-            #menuDiv {
-                position: absolute;
-                top: 0;
-                margin-left: 0;
-            }
-            #batchInformationDiv {
-                position: absolute;
-                z-index: 0;
-                top: 0;
-                right: 0;
-                color: white;
-                color: #eee;
-                font: 11px 'Lucida Grande',sans-serif;
-                line-height: normal;
-                text-shadow: 0 -1px 0 #111;
-                padding: 0 1rem;
-                background: #1a1a1a;
-                border: 1px solid #2c2c2c;
-                opacity: 0.8;
-            }
-            #batchInformationDiv > p {
-                margin: 0.5rem 0;
-            }
-
-            #batchInformationDiv > ul {
-                padding: 0 1rem;
-            }
-            @media (max-width: 600px) {
-                #menuDiv {
-                    display: none;
-                }
-            }
-        </style>
+        <style src="globe_wfs_extruded.css"></style>
         <meta charset="UTF-8">
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,7 +22,7 @@
         <script type="text/javascript">
 
 
-        var elements_lies = { // batiment enfant, batiments parents = principales
+        var elementsLinked = { // batiment enfant, batiments parents = principales
             "bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
             "bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
             "bati_industriel.2339424" :["bati_indifferencie.3616112"],
@@ -83,19 +33,19 @@
             "bati_industriel.284403" :["bati_indifferencie.3616112"],
             "bati_indifferencie.4127882" :["bati_indifferencie.3616112"]
         }
-        //var lier_element = reversJson(elements_lies)// batiment parent = principale, batiments enfants
+        //var linkedElements = reversJson(elementsLinked)// batiment parent = principale, batiments enfants
         
         
 
 
-        console.log(elements_lies);
+        console.log(elementsLinked);
 
 
 
-	    var selected_build=[];
+	    var selectedBuild=[];
             /* global itowns, document, GuiTools, globeView, promises */
-            var menuGlobe = new GuiTools('menuDiv');
-            menuGlobe.view = globeView;
+            var globeMenu = new GuiTools('menuDiv');
+            globeMenu.view = globeView;
 
             
             //Listen for globe full initialisation event
@@ -103,10 +53,10 @@
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
                 Promise.all(promises).then(function () {
-                    //menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
-                    //menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
+                    //globeMenu.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
+                    //globeMenu.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
                     addMeshToScene();
-                    menuGlobe.gui.add({ WatherLevel: 0.0}, 'WatherLevel').min(-10.0).max(50.0).onChange((
+                    globeMenu.gui.add({ WatherLevel: 0.0}, 'WatherLevel').min(-10.0).max(50.0).onChange((
                         function updateWatherLevel(value) {
                             adjustAltitude(value);
                             checkWaterHeightForBuildings(168 + value);
@@ -114,11 +64,11 @@
                         }));
                     globeView.controls.setTilt(45, true);
                     checkWaterHeightForBuildings(168);
-                    //var coords_elements_lies = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
+                    //var coordsElementsLinked = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
                 });
             });
-            //var d = new debug.Debug(globeView, menuGlobe.gui);
-            //debug.createTileDebugUI(menuGlobe.gui, globeView, globeView.wgs84TileLayer, d);
+            //var d = new debug.Debug(globeView, globeMenu.gui);
+            //debug.createTileDebugUI(globeMenu.gui, globeView, globeView.wgs84TileLayer, d);
 
             function picking(event) {
                 // Pick an object with batch id
@@ -132,10 +82,10 @@
 
                 raycaster.setFromCamera(mouse, globeView.camera.camera3D);
                 // calculate objects intersecting the picking ray
-                for (var i =0; i< selected_build.length; i++){
-                    let tmp_coll = colorAllObjectWithId(selected_build[i][0], selected_build[i][1], selected_build[i][2]);
+                for (var i =0; i< selectedBuild.length; i++){
+                    let tmpColl = colorAllObjectWithId(selectedBuild[i][0], selectedBuild[i][1], selectedBuild[i][2]);
                 }
-                selected_build=[];
+                selectedBuild=[];
                 var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
                 for (var i = 0; i < intersects.length; i++) {
                     var interAttributes = intersects[i].object.geometry.attributes;
@@ -146,10 +96,10 @@
                             var id = interAttributes.id.array[face];
                             var batchTable = intersects[i].object.parent.features[id].properties;
                             // console.log(intersects[i], batchTable,batchTable.z_min);
-                            selected_build.push([intersects[i], id, []])
-                            let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
-                            let coord_moy = coordsMoyAllObjectWithId(intersects[i].object, id);
-                            selected_build[selected_build.length-1][2]=tmp_coll;
+                            selectedBuild.push([intersects[i], id, []])
+                            let tmpColl = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
+                            let averageCoordinates = coordsAvgAllObjectWithId(intersects[i].object, id);
+                            selectedBuild[selectedBuild.length-1][2]=tmpColl;
                             Object.keys(batchTable).map(function(objectKey) {
                                 var value = batchTable[objectKey];
                                 // if the value is a integer or not
@@ -157,10 +107,10 @@
                                 htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
                                 return true;
                             });
-                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
-                            coord_moy[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
-                            //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
-                            addMarqueur(coord_moy, 0xff0000, "test");
+                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ averageCoordinates[0] +', '+ averageCoordinates[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
+                            averageCoordinates[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
+                            //averageCoordinates=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
+                            addMarqueur(averageCoordinates, 0xff0000, "test");
                             return;
                         }
                     }
@@ -180,10 +130,10 @@
 
                 raycaster.setFromCamera(mouse, globeView.camera.camera3D);
                 // calculate objects intersecting the picking ray
-                for (var i =0; i< selected_build.length; i++){
-                    let tmp_coll = colorAllObjectWithId(selected_build[i][0], selected_build[i][1], selected_build[i][2]);
+                for (var i =0; i< selectedBuild.length; i++){
+                    let tmpColl = colorAllObjectWithId(selectedBuild[i][0], selectedBuild[i][1], selectedBuild[i][2]);
                 }
-                selected_build=[];
+                selectedBuild=[];
                 var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
                 for (var i = 0; i < intersects.length; i++) {
                     var interAttributes = intersects[i].object.geometry.attributes;
@@ -195,10 +145,10 @@
                             var batchTable = intersects[i].object.parent.features[id].properties;
                             console.log(batchTable.id);
                             /*// console.log(intersects[i], batchTable,batchTable.z_min);
-                            selected_build.push([intersects[i], id, []])
-                            let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
-                            let coord_moy = coordsMoyAllObjectWithId(intersects[i].object, id);
-                            selected_build[selected_build.length-1][2]=tmp_coll;
+                            selectedBuild.push([intersects[i], id, []])
+                            let tmpColl = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
+                            let averageCoordinates = coordsAvgAllObjectWithId(intersects[i].object, id);
+                            selectedBuild[selectedBuild.length-1][2]=tmpColl;
                             Object.keys(batchTable).map(function(objectKey) {
                                 var value = batchTable[objectKey];
                                 // if the value is a integer or not
@@ -206,10 +156,10 @@
                                 htmlInfo.innerHTML +='<li><b>' + objectKey.toString() + ': </b>'+ info +'</li>';
                                 return true;
                             });
-                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
-                            coord_moy[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
-                            //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
-                            addMarqueur(coord_moy, 0xff0000, "test");*/
+                            htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ averageCoordinates[0] +', '+ averageCoordinates[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
+                            averageCoordinates[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
+                            //averageCoordinates=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
+                            addMarqueur(averageCoordinates, 0xff0000, "test");*/
                             return;
                         }
                     }
@@ -218,12 +168,12 @@
             }
 
             function colorAllObjectWithId(mesh, id, color){
-		        var tmp_coll = []
+		        var tmpColl = []
                 for(var i=0; i< mesh.object.geometry.attributes.id.array.length; ++i){      
                     if (mesh.object.geometry.attributes.id.array[i] == id){
-                        tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3])
-                        tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+1])
-                        tmp_coll.push(mesh.object.geometry.attributes.color.array[i*3+2])
+                        tmpColl.push(mesh.object.geometry.attributes.color.array[i*3])
+                        tmpColl.push(mesh.object.geometry.attributes.color.array[i*3+1])
+                        tmpColl.push(mesh.object.geometry.attributes.color.array[i*3+2])
 
                         mesh.object.geometry.attributes.color.array[i*3] = color[0];
                         mesh.object.geometry.attributes.color.array[i*3+1] = color[1];
@@ -232,25 +182,25 @@
                 }
                 mesh.object.geometry.attributes.color.needsUpdate = true; 
                 globeView.notifyChange(true);
-		        return tmp_coll;
+		        return tmpColl;
             }
-            function coordsMoyAllObjectWithId(mesh, id){
-                var tmp_coord = [0, 0, 0]
+            function coordsAvgAllObjectWithId(mesh, id){
+                var tmpCoord = [0, 0, 0]
                 var count = 0;
                 for(var i=0; i< mesh.geometry.attributes.id.array.length; ++i){      
                     if (mesh.geometry.attributes.id.array[i] == id){
                         //console.log(mesh.pos[i]);
                         const coordinates = mesh.pos[i].as('EPSG:4326');  // Geographic system
-                        tmp_coord[0] += coordinates.latitude();
-                        tmp_coord[1] += coordinates.longitude();
-                        tmp_coord[2] += coordinates.altitude();
+                        tmpCoord[0] += coordinates.latitude();
+                        tmpCoord[1] += coordinates.longitude();
+                        tmpCoord[2] += coordinates.altitude();
                         count++;
                     }
                 }
-                tmp_coord[0] /=count;
-                tmp_coord[1] /=count;
-                tmp_coord[2] /=count;
-		        return tmp_coord;
+                tmpCoord[0] /=count;
+                tmpCoord[1] /=count;
+                tmpCoord[2] /=count;
+		        return tmpCoord;
             }
             // Dumb function as an example to color buildings under water
             // Should obviously be done in shaders but it shows how to access building meshes attribute
@@ -278,7 +228,7 @@
                                                 mesh.geometry.attributes.color.needsUpdate = true;
                                                 var h = mesh.geometry.attributes.zmin.array[j]; 
                                                 if (h > 0 && h < value) {
-                                                    var coord = coordsMoyAllObjectWithId(mesh, id);
+                                                    var coord = coordsAvgAllObjectWithId(mesh, id);
                                                     coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
                                                     var a = globeView.scene.getObjectByName("test2");
 		                                            if (!a) addMarqueur(coord, 0xffff00, "test2");
@@ -286,7 +236,7 @@
                                                     var a = globeView.scene.getObjectByName("test2");
 		                                            if (a) globeView.scene.remove(a);
                                                 }
-                                            } else if (elements_lies[parent.features[id].properties.id] && lier(parent.features[id].properties.id, "bati_indifferencie.3616112")){
+                                            } else if (elementsLinked[parent.features[id].properties.id] && lier(parent.features[id].properties.id, "bati_indifferencie.3616112")){
                                                 var b = globeView.scene.getObjectByName("test2"); 
                                                 if (b) {
                                                     mesh.geometry.attributes.color.array[j * 3] = 0;
@@ -331,13 +281,13 @@
             for (const layer of globeView.getLayers()) {
                 if (layer.id === 'WFS Bus lines') {
                     layer.whenReady.then( function _(layer) {
-                        var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                        var gui = debug.GeometryDebug.createGeometryDebugUI(globeMenu.gui, globeView, layer);
                         debug.GeometryDebug.addMaterialLineWidth(gui, globeView, layer, 1, 10);
                     });
                 }
                 if (layer.id === 'WFS Buildings') {
                      layer.whenReady.then( function _(layer) {
-                //         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                //         var gui = debug.GeometryDebug.createGeometryDebugUI(globeMenu.gui, globeView, layer);
                 //         debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
                          window.addEventListener('mousemove', picking, false);
                          window.addEventListener('click', picking2, false);
@@ -345,7 +295,7 @@
                 }
                 if (layer.id === 'WFS Route points') {
                     layer.whenReady.then( function _(layer) {
-                        var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
+                        var gui = debug.GeometryDebug.createGeometryDebugUI(globeMenu.gui, globeView, layer);
                         debug.GeometryDebug.addMaterialSize(gui, globeView, layer, 1, 50);
                     });
                 }
@@ -376,31 +326,31 @@
                 // add the mesh to the scene
                 globeView.scene.add(mesh);
             }
-            function lier(clef, value){
-                for (var t = 0; t<elements_lies[clef].length; t++){
-                    if(elements_lies[clef][t]==value){
+            function lier(key, value){
+                for (var t = 0; t<elementsLinked[key].length; t++){
+                    if(elementsLinked[key][t]==value){
                         return true;
                     }
                 }
                 return false;
             }
 /*
-            function create_ligne(parent){
-                if(!coords_elements_lies){
-                    var coords_elements_lies = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
+            function createLine(parent){
+                if(!coordsElementsLinked){
+                    var coordsElementsLinked = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
                 }
-                for (var i =0; i<lier_element[parent].length; i++){
-                    coord_1=coords_elements_lies[parent];
-                    coord_2=coords_elements_lies[lier_element[parent][i]];
+                for (var i =0; i<linkedElements[parent].length; i++){
+                    coords1=coordsElementsLinked[parent];
+                    coords2=coordsElementsLinked[linkedElements[parent][i]];
                     var material = new THREE.LineBasicMaterial({
                         color: 0x0000ff
                     });
-                    var meshCoord_1 = new itowns.Coordinates('EPSG:4326', coords_1[1], coords_1[0], coords_1[2]).as(globeView.referenceCrs);
-                    var meshCoord_2 = new itowns.Coordinates('EPSG:4326', coords_2[1], coords_2[0], coords_2[2]).as(globeView.referenceCrs);
+                    var meshcoord1 = new itowns.Coordinates('EPSG:4326', coords1[1], coords1[0], coords1[2]).as(globeView.referenceCrs);
+                    var meshCoord2 = new itowns.Coordinates('EPSG:4326', coords2[1], coords2[0], coords2[2]).as(globeView.referenceCrs);
                     var geometry = new THREE.Geometry();
                     geometry.vertices.push(
-                        new THREE.Vector3( meshCoord_1.x(), meshCoord_1.y(), meshCoord_1.z()),
-                        new THREE.Vector3( meshCoord_2.x(), meshCoord_2.y(), meshCoord_2.z())
+                        new THREE.Vector3( meshcoord1.x(), meshcoord1.y(), meshcoord1.z()),
+                        new THREE.Vector3( meshCoord2.x(), meshCoord2.y(), meshCoord2.z())
                     );
 
                     var line = new THREE.Line( geometry, material );
