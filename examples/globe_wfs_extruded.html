@@ -83,7 +83,9 @@
 
                             removeOldInteractions();
 
-                            displayAllInteractionsForFloodedImportantBuildings(168 + value); // WHY +168 ?
+                            //checkWaterHeightForBuildings(); // Normal Mode
+
+                            displayAllInteractionsForFloodedImportantBuildings(168 + value); // Interaction Mode
 
 
                             //here add other methods
@@ -100,7 +102,9 @@
                     globeView.controls.setTilt(45, true);
 
                     // initialisation of the checkWaterHeightForBuildings
-                    displayAllInteractionsForFloodedImportantBuildings(168);
+                    //checkWaterHeightForBuildings(); // Normal Mode
+
+                    displayAllInteractionsForFloodedImportantBuildings(168); // Interaction Mode
 
                     ////////var coordsElementsLinked = extract_coords(); //id_BDTopo élément, coordonnées : [long, lat, alti]
 
