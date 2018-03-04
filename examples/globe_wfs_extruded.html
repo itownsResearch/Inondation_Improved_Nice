@@ -29,20 +29,31 @@
 
             // Global variable that contains for each building (key) a list of important buildings (value)
             var elementsLinked = {
-                "bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
-                "bati_indifferencie.17807920" :["bati_indifferencie.3616112"],
-                "bati_industriel.2339424" :["bati_indifferencie.3616112"],
+                "bati_indifferencie.17807922" :["bati_indifferencie.3616112","bati_indifferencie.4127882"],
+                "bati_indifferencie.17807920" :["bati_indifferencie.3616112","bati_indifferencie.4127882"],
+                "bati_industriel.2339424" :["bati_indifferencie.3616112","bati_indifferencie.4127882"],
                 "bati_indifferencie.28964625" :["bati_indifferencie.3616112"],
                 "bati_indifferencie.3672662" :["bati_indifferencie.3616112"],
                 "bati_indifferencie.3672661" :["bati_indifferencie.3616112"],
-                "bati_industriel.284404" :["bati_indifferencie.3616112"],
-                "bati_industriel.284403" :["bati_indifferencie.3616112"],
-                "bati_indifferencie.4127882" :["bati_indifferencie.3616112"]
+                "bati_industriel.284404" :["bati_indifferencie.4127882"],
+                "bati_industriel.284403" :["bati_indifferencie.4127882"]
             };
 
-            // Global variable that contains for each important building (key) a list of buildings (value)
-            var linkedElements = reverseJson(elementsLinked); //THE FUNCTION reverseJson DOESN'T WORK CORRECTLY
+            // Global variable that contains for each important building (key) a list buildings (value)
+            var linkedElements = reverseJson(elementsLinked);
+
+            // Global variable that contains for each important building (key) the list of its attributes (value)
+            var importantBuildings = {
+                "bati_indifferencie.3616112":["electric","water"],
+                "bati_indifferencie.4127882":["hospital"]
+            };
+
+            // Global variable that contains for each important building attributes (key) the list of important buildings (value)
+            var attributeBuildings = reverseJson(importantBuildings);
+
+            var coordinatesImportantBuildings={};
             
+
             // Global variable that contains the current selected buildings
     	    var selectedBuild=[];
 
@@ -70,7 +81,9 @@
 
                             adjustAltitude(value); // WHAT DOES IT DO ???
 
-                            checkWaterHeightForBuildings(168 + value); // WHY +168 ?
+                            removeOldInteractions();
+
+                            displayAllInteractionsForFloodedImportantBuildings(168 + value); // WHY +168 ?
 
 
                             //here add other methods
@@ -87,7 +100,7 @@
                     globeView.controls.setTilt(45, true);
 
                     // initialisation of the checkWaterHeightForBuildings
-                    checkWaterHeightForBuildings(168);
+                    displayAllInteractionsForFloodedImportantBuildings(168);
 
                     ////////var coordsElementsLinked = extract_coords(); //id_BDTopo élément, coordonnées : [long, lat, alti]
 
@@ -98,7 +111,6 @@
             ////////debug.createTileDebugUI(globeMenu.gui, globeView, globeView.wgs84TileLayer, d);
 
             // WHAT DOES IT DO UNDER ???
-
             for (const layer of globeView.getLayers()) {
                 if (layer.id === 'WFS Bus lines') {
                     layer.whenReady.then( function _(layer) {
@@ -112,8 +124,8 @@
                         ////////var gui = debug.GeometryDebug.createGeometryDebugUI(globeMenu.gui, globeView, layer);
                         ////////debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
 
-                         window.addEventListener('mousemove', picking, false);
-                         window.addEventListener('click', picking2, false);
+                         window.addEventListener('mousemove', normalMouseMouse, false);
+                         window.addEventListener('click', normalMouseClick, false);
                      });
                 }
                 if (layer.id === 'WFS Route points') {
@@ -126,7 +138,7 @@
 
             /////////////////////////////////////////// Functions and methods part ///////////////////////////////////////////
 
-            function picking(event) {
+            function normalMouseMouse(event) {
                 // Pick an object with batch id
                 var mouse = globeView.eventToNormalizedCoords(event);
                 var raycaster = new itowns.THREE.Raycaster();
@@ -173,7 +185,7 @@
                 }    
             }
 
-            function picking2(event) {
+            function normalMouseClick(event) {
                 // Pick an object with batch id
                 var mouse = globeView.eventToNormalizedCoords(event);
                 var raycaster = new itowns.THREE.Raycaster();
@@ -199,6 +211,7 @@
                             var id = interAttributes.id.array[face];
                             var batchTable = intersects[i].object.parent.features[id].properties;
                             console.log(batchTable.id);
+
                             /*// console.log(intersects[i], batchTable,batchTable.z_min);
                             selectedBuild.push([intersects[i], id, []])
                             let tmpColl = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
@@ -215,6 +228,7 @@
                             averageCoordinates[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
                             //averageCoordinates=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
                             addMarker(averageCoordinates, 0xff0000, "test");*/
+
                             return;
                         }
                     }
@@ -261,7 +275,7 @@
 		        return tmpCoord;
             }
 
-            // Dumb function as an example to color buildings under water
+            // Dumb function as an example to color buildings under water 
             // Should obviously be done in shaders but it shows how to access building meshes attribute
             function checkWaterHeightForBuildings(value) {
                 console.log("e");
@@ -278,37 +292,135 @@
                                     var mesh = element.children[c].children[0];
                                     for (let j = 0; j < mesh.geometry.attributes.zmin.count; ++j) {
                                         let id = mesh.geometry.attributes.id.array[j];
-                                        if (parent.features[id].properties.id == "bati_indifferencie.3616112"){
-                                            //console.log(id);
-                                            //console.log(parent.features[id].properties);
+
+                                        //important buidings
+                                        if ( Object.keys(importantBuildings).includes(parent.features[id].properties.id) ){
+                                            mesh.geometry.attributes.color.array[j * 3] = 255;
+                                            mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
+                                            mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
+                                            mesh.geometry.attributes.color.needsUpdate = true;
+                                        }
+                                        // normal buildings
+                                        else{
+                                            var h = mesh.geometry.attributes.zmin.array[j]; 
+                                            if (h > 0 && h < value) {
+                                                mesh.geometry.attributes.color.array[j * 3] = 5 * (value - h);
+                                                mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
+                                                mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                mesh.geometry.attributes.color.needsUpdate = true;
+                                            }else{
+                                                mesh.geometry.attributes.color.array[j * 3] = 255;
+                                                mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                mesh.geometry.attributes.color.needsUpdate = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    })
+
+                    globeView.notifyChange(true);
+                }
+            }
+
+            function displayAllInteractionsForFloodedImportantBuildings(value) {
+                console.log("i");
+                // For all globe tile meshes we look for tile at level 14 on which building meshes are attached.
+                for (let i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
+                    globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
+                        //  console.log("ELEMENT: ", element);
+                        if (element.level != undefined && element.level == 14 && element.visible) {
+                            //console.log(element);
+                            for (let c = 0; c < element.children.length; ++c) {
+
+                                if (element.children[c].type == "Group") {
+                                    var parent = element.children[c];
+                                    var mesh = element.children[c].children[0];
+                                    for (let j = 0; j < mesh.geometry.attributes.zmin.count; ++j) {
+                                        let id = mesh.geometry.attributes.id.array[j];
+
+                                        //important building
+                                        if ( Object.keys(importantBuildings).includes(parent.features[id].properties.id) ){
+                                            //red color of imortant buildings
                                             mesh.geometry.attributes.color.array[j * 3] = 255;
                                             mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
                                             mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
                                             mesh.geometry.attributes.color.needsUpdate = true;
                                             var h = mesh.geometry.attributes.zmin.array[j]; 
+
+                                            //if the building is in contact with the water display a yellow sphere above it
                                             if (h > 0 && h < value) {
                                                 var coord = coordsAvgAllObjectWithId(mesh, id);
                                                 coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
-                                                var a = globeView.scene.getObjectByName("test2");
-	                                            if (!a) addMarker(coord, 0xffff00, "test2");
-                                            } else {
-                                                var a = globeView.scene.getObjectByName("test2");
-	                                            if (a) globeView.scene.remove(a);
+                                                var a = globeView.scene.getObjectByName("test2" + parent.features[id].properties.id);
+                                                if (!a) addMarker(coord, 0xffff00, "test2" + parent.features[id].properties.id);
+
+                                                coordinatesImportantBuildings[parent.features[id].properties.id]=coord; //her I saved the marker position
                                             }
-                                        } else if (elementsLinked[parent.features[id].properties.id] && isLinked(parent.features[id].properties.id, "bati_indifferencie.3616112")){
-                                            var b = globeView.scene.getObjectByName("test2"); 
+                                            // else remove the old marker
+                                            else {
+                                                var a = globeView.scene.getObjectByName("test2" + parent.features[id].properties.id);
+                                                if (a) globeView.scene.remove(a);
+                                            }
+                                        } 
+
+                                        //linked buildings
+                                        
+                                        else if (elementsLinked[parent.features[id].properties.id]){
+
+                                            var importantBuildingsParents = elementsLinked[parent.features[id].properties.id];
+
+                                            var listFloodedImportantBuildings = [];
+                                            var b = false;
+
+                                            for (var cp = 0; cp < importantBuildingsParents.length; cp++) {
+                                                var tmpExistsObject = globeView.scene.getObjectByName("test2" + importantBuildingsParents[cp]);
+                                                if (tmpExistsObject) {
+                                                    listFloodedImportantBuildings.push(importantBuildingsParents[cp]);
+                                                    b = true
+                                                }
+                                            }
+
+                                            
+                                            
+                                            //at least one important linked building is flooded
                                             if (b) {
-                                                mesh.geometry.attributes.color.array[j * 3] = 0;
-                                                mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
-                                                mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
-                                                mesh.geometry.attributes.color.needsUpdate = true;
-                                            }else{
-                                                mesh.geometry.attributes.color.array[j * 3] = 0;
+
+                                                //here trace the interactions
+                                                var coord = coordsAvgAllObjectWithId(mesh, id);
+                                                coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+
+                                                listFloodedImportantBuildings.forEach(el => {
+                                                    importantCoord = coordinatesImportantBuildings[el]
+                                                    traceLine(coord,importantCoord);
+                                                    console.log("pas_coll");
+                                                });
+
+                                                mesh.geometry.attributes.color.array[j * 3] = 255;
                                                 mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
                                                 mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
                                                 mesh.geometry.attributes.color.needsUpdate = true;
                                             }
+                                            //normal case
+                                            else{
+                                                var h = mesh.geometry.attributes.zmin.array[j]; 
+                                                if (h > 0 && h < value) {
+                                                    mesh.geometry.attributes.color.array[j * 3] = 5 * (value - h);
+                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                    mesh.geometry.attributes.color.needsUpdate = true;
+                                                }else{
+                                                    mesh.geometry.attributes.color.array[j * 3] = 255;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                    mesh.geometry.attributes.color.needsUpdate = true;
+                                                }
+                                            }
                                         }
+
+                                        //normal buildings
                                         else{
                                             var h = mesh.geometry.attributes.zmin.array[j]; 
                                             if (h > 0 && h < value) {
@@ -397,14 +509,39 @@
                 }                
             }
 
+            function traceLine(coords1,coords2) {
+                var THREE = itowns.THREE;
+                var material = new THREE.LineBasicMaterial({
+                        color: 0x0000ff
+                    });
+                    var meshcoord1 = new itowns.Coordinates('EPSG:4326', coords1[1], coords1[0], coords1[2]).as(globeView.referenceCrs);
+                    var meshCoord2 = new itowns.Coordinates('EPSG:4326', coords2[1], coords2[0], coords2[2]).as(globeView.referenceCrs);
+                    var geometry = new THREE.Geometry();
+                    geometry.vertices.push(
+                        new THREE.Vector3( meshcoord1.x(), meshcoord1.y(), meshcoord1.z()),
+                        new THREE.Vector3( meshCoord2.x(), meshCoord2.y(), meshCoord2.z())
+                    );
+
+                    var line = new THREE.Line( geometry, material );
+                    line.name = 'interaction';
+                    globeView.scene.add( line );
+            }
+
+            function removeOldInteractions(argument) {
+                var a = globeView.scene.getObjectByName("interaction");
+                let i=0;
+                while(a){
+                    console.log(a);
+                    globeView.scene.remove(a);
+                    a = globeView.scene.getObjectByName("interaction");
+                }                
+            }
+
             function reverseJson(json){
                 var result ={};
                 Object.keys(json).map(function(objectKey) {
                     var value = json[objectKey];
-                    if (! result[value]){
-                        result[value]=[];
-                    }
-                    result[value].push(objectKey);
+                    value.forEach(el => ( (! result[el]) ? result[el]=[objectKey] : result[el].push(objectKey)) );
                 });
                 return result;
             }
