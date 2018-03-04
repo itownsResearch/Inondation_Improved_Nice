@@ -81,7 +81,7 @@
 
                             adjustAltitude(value); // WHAT DOES IT DO ???
 
-                            removeOldInteractions();
+                            removeOldInteractions("interaction");
 
                             //checkWaterHeightForBuildings(); // Normal Mode
 
@@ -129,7 +129,9 @@
                         ////////debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
 
                          window.addEventListener('mousemove', normalMouseMouse, false);
-                         window.addEventListener('click', normalMouseClick, false);
+                         //window.addEventListener('click', normalMouseClick, false); //the normal click
+                         window.addEventListener('click', interactionMouseClick, false); // the interaction click --- TO DO : don't forget to remove interactionClick if you change mode
+                         
                      });
                 }
                 if (layer.id === 'WFS Route points') {
@@ -239,6 +241,63 @@
                 }   
             }
 
+            function interactionMouseClick(event){
+                // Pick an object with batch id
+                var mouse = globeView.eventToNormalizedCoords(event);
+                var raycaster = new itowns.THREE.Raycaster();
+                var htmlInfo = document.getElementById('info');
+                htmlInfo.innerHTML = ' ';
+        
+                var a = globeView.scene.getObjectByName("test");
+                if (a) globeView.scene.remove(a);
+                a = globeView.scene.getObjectByName("test3");
+                if (a) globeView.scene.remove(a);
+
+                removeOldInteractions("interactionClick");
+
+                raycaster.setFromCamera(mouse, globeView.camera.camera3D);
+                // calculate objects intersecting the picking ray
+                for (let i =0; i< selectedBuild.length; i++){
+                    let tmpColl = colorAllObjectWithId(selectedBuild[i][0], selectedBuild[i][1], selectedBuild[i][2]);
+                }
+                selectedBuild=[];
+                var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
+                for (let i = 0; i < intersects.length; i++) {
+                    var interAttributes = intersects[i].object.geometry.attributes;
+                    if (interAttributes && intersects[i].object instanceof itowns.THREE.Mesh) {
+                        if (interAttributes.id) {
+                            //console.log(intersects[i]);
+                            var face = intersects[i].face.a;
+                            var id = interAttributes.id.array[face];
+                            var batchTable = intersects[i].object.parent.features[id].properties;
+                            console.log(batchTable.id);
+
+                            let averageCoordinates = coordsAvgAllObjectWithId(intersects[i].object, id);
+                            averageCoordinates[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
+
+                            // important buildings are avoided
+                            if (Object.keys(linkedElements).includes(batchTable.id)) {
+
+                            }
+                            // normal buildings with interactions
+                            else if (Object.keys(elementsLinked).includes(batchTable.id)) {
+                                elementsLinked[batchTable.id].forEach(bldg => {
+                                    var coords2 = coordinatesImportantBuildings[bldg];
+                                    traceLine(averageCoordinates,coords2,"interactionClick");
+                                });
+                                addMarker(averageCoordinates, 0xffff00, "test3");
+                            }
+                            // normal buildings without interactions
+                            else {
+                                addMarker(averageCoordinates, 0xffff00, "test3");
+                            }
+
+                            return;
+                        }
+                    }
+                }   
+            }
+
             // color a mesh along its id and a chosen color and return its old color
             function colorAllObjectWithId(mesh, id, color){
 		        var tmpColl = []
@@ -299,6 +358,11 @@
 
                                         //important buidings
                                         if ( Object.keys(importantBuildings).includes(parent.features[id].properties.id) ){
+
+                                            var coord = coordsAvgAllObjectWithId(mesh, id);
+                                            coordinatesImportantBuildings[parent.features[id].properties.id]=coord; //her I saved the marker position
+                                            coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+
                                             mesh.geometry.attributes.color.array[j * 3] = 255;
                                             mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
                                             mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
@@ -354,14 +418,17 @@
                                             mesh.geometry.attributes.color.needsUpdate = true;
                                             var h = mesh.geometry.attributes.zmin.array[j]; 
 
+                                            var coord = coordsAvgAllObjectWithId(mesh, id);
+                                            coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+                                            coordinatesImportantBuildings[parent.features[id].properties.id]=coord; //her I saved the marker position
+
+
                                             //if the building is in contact with the water display a yellow sphere above it
                                             if (h > 0 && h < value) {
-                                                var coord = coordsAvgAllObjectWithId(mesh, id);
-                                                coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+                                                
                                                 var a = globeView.scene.getObjectByName("test2" + parent.features[id].properties.id);
                                                 if (!a) addMarker(coord, 0xffff00, "test2" + parent.features[id].properties.id);
 
-                                                coordinatesImportantBuildings[parent.features[id].properties.id]=coord; //her I saved the marker position
                                             }
                                             // else remove the old marker
                                             else {
@@ -398,7 +465,7 @@
 
                                                 listFloodedImportantBuildings.forEach(el => {
                                                     importantCoord = coordinatesImportantBuildings[el]
-                                                    traceLine(coord,importantCoord);
+                                                    traceLine(coord,importantCoord,"interaction");
                                                     console.log("pas_coll");
                                                 });
 
@@ -513,7 +580,7 @@
                 }                
             }
 
-            function traceLine(coords1,coords2) {
+            function traceLine(coords1,coords2,name) {
                 var THREE = itowns.THREE;
                 var material = new THREE.LineBasicMaterial({
                         color: 0x0000ff
@@ -527,17 +594,17 @@
                     );
 
                     var line = new THREE.Line( geometry, material );
-                    line.name = 'interaction';
+                    line.name = name;
                     globeView.scene.add( line );
             }
 
-            function removeOldInteractions(argument) {
-                var a = globeView.scene.getObjectByName("interaction");
+            function removeOldInteractions(name) {
+                var a = globeView.scene.getObjectByName(name);
                 let i=0;
                 while(a){
                     console.log(a);
                     globeView.scene.remove(a);
-                    a = globeView.scene.getObjectByName("interaction");
+                    a = globeView.scene.getObjectByName(name);
                 }                
             }
 
