@@ -72,27 +72,28 @@
         <script type="text/javascript">
 
 
-        var elements_lies = { // batiment enfant, batiments parents = principales
-            "bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
-            "bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
-            "bati_industriel.2339424" :["bati_indifferencie.3616112"],
-            "bati_indifferencie.28964625" :["bati_indifferencie.3616112"], 
-            "bati_indifferencie.3672662" :["bati_indifferencie.3616112"], 
-            "bati_indifferencie.3672661" :["bati_indifferencie.3616112"],
-            "bati_industriel.284404" :["bati_indifferencie.3616112"],
-            "bati_industriel.284403" :["bati_indifferencie.3616112"],
-            "bati_indifferencie.4127882" :["bati_indifferencie.3616112"]
-        }
-        //var lier_element = reversJson(elements_lies)// batiment parent = principale, batiments enfants
-        
-        
+			var elements_lies = { // batiment enfant, batiments parents = principales
+				"bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
+				"bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
+				"bati_industriel.2339424" :["bati_indifferencie.3616112"],
+				"bati_indifferencie.28964625" :["bati_indifferencie.3616112"], 
+				"bati_indifferencie.3672662" :["bati_indifferencie.3616112"], 
+				"bati_indifferencie.3672661" :["bati_indifferencie.3616112"],
+				"bati_industriel.284404" :["bati_indifferencie.3616112"],
+				"bati_industriel.284403" :["bati_indifferencie.3616112"],
+				"bati_indifferencie.4127882" :["bati_indifferencie.3616112"]
+			};
+			
+			var lier_element = reversJson(elements_lies);// batiment parent = principale, batiments enfants
+			
+			
+			//console.log(elements_lies);
+			//console.log(lier_element);
 
 
-        console.log(elements_lies);
-
-
-
-	    var selected_build=[];
+			var selected_build=[];
+			var coords_elements_lies;
+			
             /* global itowns, document, GuiTools, globeView, promises */
             var menuGlobe = new GuiTools('menuDiv');
             menuGlobe.view = globeView;
@@ -112,9 +113,10 @@
                             checkWaterHeightForBuildings(168 + value);
                             globeView.notifyChange(true);
                         }));
-                    globeView.controls.setTilt(45, true);
-                    checkWaterHeightForBuildings(168);
-                    //var coords_elements_lies = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
+					menuGlobe.gui.add({test : true}, "test").name("test").onChange((
+                        function test(value) {
+							console.log(value);
+							}));
                 });
             });
             //var d = new debug.Debug(globeView, menuGlobe.gui);
@@ -175,15 +177,9 @@
                 var htmlInfo = document.getElementById('info');
                 htmlInfo.innerHTML = ' ';
 		
-		        var a = globeView.scene.getObjectByName("test");
-		        if (a) globeView.scene.remove(a);
 
                 raycaster.setFromCamera(mouse, globeView.camera.camera3D);
                 // calculate objects intersecting the picking ray
-                for (var i =0; i< selected_build.length; i++){
-                    let tmp_coll = colorAllObjectWithId(selected_build[i][0], selected_build[i][1], selected_build[i][2]);
-                }
-                selected_build=[];
                 var intersects = raycaster.intersectObjects(globeView.wgs84TileLayer.level0Nodes, true);
                 for (var i = 0; i < intersects.length; i++) {
                     var interAttributes = intersects[i].object.geometry.attributes;
@@ -255,7 +251,7 @@
             // Dumb function as an example to color buildings under water
             // Should obviously be done in shaders but it shows how to access building meshes attribute
             function checkWaterHeightForBuildings(value) {
-                    console.log("e");
+                    //console.log("e");
                     // For all globe tile meshes we look for tile at level 14 on which building meshes are attached.
                     for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
                         globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
@@ -384,43 +380,76 @@
                 }
                 return false;
             }
-/*
-            function create_ligne(parent){
-                if(!coords_elements_lies){
-                    var coords_elements_lies = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
-                }
-                for (var i =0; i<lier_element[parent].length; i++){
-                    coord_1=coords_elements_lies[parent];
-                    coord_2=coords_elements_lies[lier_element[parent][i]];
-                    var material = new THREE.LineBasicMaterial({
-                        color: 0x0000ff
-                    });
-                    var meshCoord_1 = new itowns.Coordinates('EPSG:4326', coords_1[1], coords_1[0], coords_1[2]).as(globeView.referenceCrs);
-                    var meshCoord_2 = new itowns.Coordinates('EPSG:4326', coords_2[1], coords_2[0], coords_2[2]).as(globeView.referenceCrs);
-                    var geometry = new THREE.Geometry();
-                    geometry.vertices.push(
-                        new THREE.Vector3( meshCoord_1.x(), meshCoord_1.y(), meshCoord_1.z()),
-                        new THREE.Vector3( meshCoord_2.x(), meshCoord_2.y(), meshCoord_2.z())
-                    );
 
-                    var line = new THREE.Line( geometry, material );
-                    globeView.scene.add( line );
+            function create_ligne(parent){
+				var THREE = itowns.THREE;
+                if(!coords_elements_lies){
+                    coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
+                }
+				
+                for (var i =0; i<lier_element[parent].length; i++){
+					if ( coords_elements_lies[lier_element[parent][i]]){
+						var coords_1=coords_elements_lies[parent];
+						var coords_2=coords_elements_lies[lier_element[parent][i]];
+						var material = new THREE.LineBasicMaterial({
+							color: 0x0000ff
+						});
+						var meshCoord_1 = new itowns.Coordinates('EPSG:4326', coords_1[1], coords_1[0], coords_1[2]).as(globeView.referenceCrs);
+						var meshCoord_2 = new itowns.Coordinates('EPSG:4326', coords_2[1], coords_2[0], coords_2[2]).as(globeView.referenceCrs);
+						var geometry = new THREE.Geometry();
+						geometry.vertices.push(
+							new THREE.Vector3( meshCoord_1.x(), meshCoord_1.y(), meshCoord_1.z()),
+							new THREE.Vector3( meshCoord_2.x(), meshCoord_2.y(), meshCoord_2.z())
+						);
+						var line = new THREE.Line( geometry, material );
+						line.name = "lien";
+						globeView.scene.add( line );
+					}
                 }
                 
             }
 
-            function reversJson(json){
+            function reversJson(jsonEl){
                 var tmp ={};
-                Object.keys(json).map(function(objectKey) {
-                    var value = json[objectKey];
-                    if (tmp[value]){
-                        tmp[value]=[];
-                    }
-                    tmp[value].push(objectKey);
+                Object.keys(jsonEl).map(function(objectKey) {
+                    var values = jsonEl[objectKey];
+					for (let i = 0; i < values.length; i++){
+						var value = values[i];
+						if (!tmp[value]){
+							tmp[value]=[];
+						}
+						tmp[value].push(objectKey);
+					}
                 });
                 return tmp;
             }
-*/
+			
+			function extract_coords(){
+				var tmp = {};
+				for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
+					globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
+						//  console.log("ELEMENT: ", element);
+						if (element.level != undefined && element.level == 14 && element.visible) {
+							//console.log(element);
+							for (var c = 0; c < element.children.length; ++c) {
+								if (element.children[c].type == "Group") {
+									var parent = element.children[c];
+									var mesh = element.children[c].children[0];
+									for (var j = 0; j < mesh.geometry.attributes.zmin.count; ++j) {
+										let id = mesh.geometry.attributes.id.array[j];
+										if (lier_element[parent.features[id].properties.id] || elements_lies[parent.features[id].properties.id]){
+											tmp[parent.features[id].properties.id] = coordsMoyAllObjectWithId(mesh, id);
+											tmp[parent.features[id].properties.id][2]+=parent.minAltitude+parent.features[id].properties.hauteur;
+											console.log(parent.features[id].properties.id);
+										}
+									}
+								}
+							}
+						}
+					});
+				}
+				return tmp;
+			}
         </script>
         <div id="batchInformationDiv">
             <p><b>Information Batiment</b></p>
