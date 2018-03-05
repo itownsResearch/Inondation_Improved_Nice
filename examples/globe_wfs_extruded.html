@@ -301,7 +301,7 @@
                                                 var h = mesh.geometry.attributes.zmin.array[j]; 
                                                 if (h > 0 && h < value) {
                                                     var coord = coordsMoyAllObjectWithId(mesh, id);
-                                                    coord[2]*=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+                                                    coord[2]+=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
                                                     var a = globeView.scene.getObjectByName("test2");
 		                                            if (!a) addMarqueur(coord, 0xffff00, "test2");
                                                 } else {
@@ -315,11 +315,16 @@
                                                     mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
                                                     mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
                                                     mesh.geometry.attributes.color.needsUpdate = true;
+                                                    var coord = coordsMoyAllObjectWithId(mesh, id);
+                                                    coord[2]+=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+                                                    addGroupMarqueur(coord, 0xffff00, "test3");
                                                 }else{
                                                     mesh.geometry.attributes.color.array[j * 3] = 0;
                                                     mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
                                                     mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
                                                     mesh.geometry.attributes.color.needsUpdate = true;
+                                                    var a = globeView.scene.getObjectByName("test3");
+		                                            if (a) globeView.scene.remove(a);
                                                 }
                                             }
                                             else{
@@ -397,6 +402,37 @@
                 //console.log(mesh);
                 // add the mesh to the scene
                 globeView.scene.add(mesh);
+            }
+            function addGroupMarqueur(coords, color, name) {
+                // creation of the new mesh (a cylinder)
+                //console.log("e");
+                var THREE = itowns.THREE;
+                var group = globeView.scene.getObjectByName(name);
+                if (!group) {
+                    group = new THREE.Group();
+                    group.name = name;
+                    globeView.scene.add(group);
+                }
+                var geometry = new THREE.CylinderGeometry(20, 20, 3, 8);
+                var material = new THREE.MeshBasicMaterial({ color: color });
+                var mesh = new THREE.Mesh(geometry, material);
+
+                // get the position on the globe, from the camera
+                
+                // position of the mesh
+                //var meshCoord = new THREE.Vector3(coords[0], coords[1], coords[2]);
+                var meshCoord = new itowns.Coordinates('EPSG:4326', coords[1], coords[0], coords[2]);
+                //console.log(meshCoord.as(globeView.referenceCrs));
+                // position and orientation of the mesh
+                mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
+                mesh.lookAt(new THREE.Vector3(0, 0, 0));
+                //mesh.rotateX(Math.PI / 2);
+
+                // update coordinate of the mesh
+                mesh.updateMatrixWorld();
+                //console.log(mesh);
+                // add the mesh to the scene
+                group.add(mesh);
             }
             function lier(clef, value){
                 for (var t = 0; t<elements_lies[clef].length; t++){
