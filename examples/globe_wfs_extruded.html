@@ -114,9 +114,12 @@
                             globeView.notifyChange(true);
                         }));
 					menuGlobe.gui.add({test : true}, "test").name("test").onChange((
-                        function test(value) {
-							console.log(value);
-							}));
+                        function t(value) {console.log(value);
+					}));
+                    globeView.controls.setTilt(45, true);
+                    checkWaterHeightForBuildings(168);
+					create_ligne("bati_indifferencie.3616112");
+                    //var coords_elements_lies = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
                 });
             });
             //var d = new debug.Debug(globeView, menuGlobe.gui);
