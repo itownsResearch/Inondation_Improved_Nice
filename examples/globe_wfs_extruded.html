@@ -73,15 +73,24 @@
 
 
 			var elements_lies = { // batiment enfant, batiments parents = principales
-				"bati_indifferencie.17807922" :["bati_indifferencie.3616112"],
+				"bati_indifferencie.17807922" :["bati_indifferencie.3616112", "bati_indifferencie.3669672"],
 				"bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
 				"bati_industriel.2339424" :["bati_indifferencie.3616112"],
-				"bati_indifferencie.28964625" :["bati_indifferencie.3616112"], 
+				"bati_indifferencie.28964625" :["bati_indifferencie.3616112", "bati_indifferencie.3669672"], 
 				"bati_indifferencie.3672662" :["bati_indifferencie.3616112"], 
 				"bati_indifferencie.3672661" :["bati_indifferencie.3616112"],
 				"bati_industriel.284404" :["bati_indifferencie.3616112"],
 				"bati_industriel.284403" :["bati_indifferencie.3616112"],
-				"bati_indifferencie.4127882" :["bati_indifferencie.3616112"]
+				"bati_indifferencie.4127882" :["bati_indifferencie.3616112"],
+				"bati_indifferencie.19592695" : ["bati_indifferencie.3669672"],
+				"bati_industriel.779713" : ["bati_indifferencie.3669672"],
+				"bati_indifferencie.3327128" : ["bati_indifferencie.3669672"],
+				"bati_indifferencie.3327113" : ["bati_indifferencie.3669672"],
+				"bati_indifferencie.23611407" : ["bati_indifferencie.3669672"],
+				"bati_indifferencie.17807925" : ["bati_indifferencie.3669672"],
+				"bati_industriel.579661" : ["bati_indifferencie.3669672"],
+				"bati_indifferencie.5325305" : ["bati_indifferencie.3669672"],
+				"bati_indifferencie.3669675" : ["bati_indifferencie.3669672"]
 			};
 			
 			var lier_element = reversJson(elements_lies);// batiment parent = principale, batiments enfants
@@ -92,7 +101,7 @@
 
 
 			var selected_build=[];
-			var coords_elements_lies;
+			var coords_elements_lies; //id_BDTopo élément, coordonnées : [long, lat, alti]
 			
             /* global itowns, document, GuiTools, globeView, promises */
             var menuGlobe = new GuiTools('menuDiv');
@@ -113,13 +122,27 @@
                             checkWaterHeightForBuildings(168 + value);
                             globeView.notifyChange(true);
                         }));
-					menuGlobe.gui.add({test : true}, "test").name("test").onChange((
-                        function t(value) {console.log(value);
+					menuGlobe.gui.add({lien : true}, "lien").name("lien").onChange((
+                        function manageLine(value) {
+							if (value==true){
+								Object.keys(lier_element).map(function(objectKey) {
+									create_ligne(objectKey);
+								});
+							} else {
+								var lines = globeView.scene.getObjectByName("lines");
+								if(lines) globeView.scene.remove(lines);
+							}
 					}));
+					menuGlobe.gui.add({select : false}, "select").name("select").onChange((
+                        function manageSelect(value) {
+							checkWaterHeightForBuildings(168);
+					}));
+					// récupération de la valeur du niveau de l'eau menuGlobe.gui.__controllers[0].object.WatherLevel
                     globeView.controls.setTilt(45, true);
                     checkWaterHeightForBuildings(168);
-					create_ligne("bati_indifferencie.3616112");
-                    //var coords_elements_lies = extract_coords()//id_BDTopo élément, coordonnées : [long, lat, alti]
+					Object.keys(lier_element).map(function(objectKey) {
+						create_ligne(objectKey);
+					});
                 });
             });
             //var d = new debug.Debug(globeView, menuGlobe.gui);
@@ -268,7 +291,7 @@
                                         var mesh = element.children[c].children[0];
                                         for (var j = 0; j < mesh.geometry.attributes.zmin.count; ++j) {
                                             let id = mesh.geometry.attributes.id.array[j];
-                                            if (parent.features[id].properties.id == "bati_indifferencie.3616112"){
+                                            if (parent.features[id].properties.id == "bati_indifferencie.3616112" && menuGlobe.gui.__controllers[2].object.select == true){
                                                 //console.log(id);
                                                 //console.log(parent.features[id].properties);
                                                 mesh.geometry.attributes.color.array[j * 3] = 255;
@@ -285,7 +308,7 @@
                                                     var a = globeView.scene.getObjectByName("test2");
 		                                            if (a) globeView.scene.remove(a);
                                                 }
-                                            } else if (elements_lies[parent.features[id].properties.id] && lier(parent.features[id].properties.id, "bati_indifferencie.3616112")){
+                                            } else if (elements_lies[parent.features[id].properties.id] && menuGlobe.gui.__controllers[2].object.select == true && lier(parent.features[id].properties.id, "bati_indifferencie.3616112")){
                                                 var b = globeView.scene.getObjectByName("test2"); 
                                                 if (b) {
                                                     mesh.geometry.attributes.color.array[j * 3] = 0;
@@ -389,7 +412,11 @@
                 if(!coords_elements_lies){
                     coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
                 }
-				
+				var lines = globeView.scene.getObjectByName("lines");
+				if (!lines){
+					lines = new THREE.Group();
+					lines.name="lines";
+				}
                 for (var i =0; i<lier_element[parent].length; i++){
 					if ( coords_elements_lies[lier_element[parent][i]]){
 						var coords_1=coords_elements_lies[parent];
@@ -405,11 +432,11 @@
 							new THREE.Vector3( meshCoord_2.x(), meshCoord_2.y(), meshCoord_2.z())
 						);
 						var line = new THREE.Line( geometry, material );
-						line.name = "lien";
-						globeView.scene.add( line );
+						line.name = "line";
+						lines.add( line );
 					}
                 }
-                
+                globeView.scene.add(lines);
             }
 
             function reversJson(jsonEl){
@@ -442,8 +469,8 @@
 										let id = mesh.geometry.attributes.id.array[j];
 										if (lier_element[parent.features[id].properties.id] || elements_lies[parent.features[id].properties.id]){
 											tmp[parent.features[id].properties.id] = coordsMoyAllObjectWithId(mesh, id);
-											tmp[parent.features[id].properties.id][2]+=parent.minAltitude+parent.features[id].properties.hauteur;
-											console.log(parent.features[id].properties.id);
+											tmp[parent.features[id].properties.id][2]=parent.features[id].properties.hauteur+ parent.features[id].properties.z_min;
+											//console.log(parent.features[id].properties.id);
 										}
 									}
 								}
