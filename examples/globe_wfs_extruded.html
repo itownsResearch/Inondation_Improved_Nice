@@ -95,7 +95,11 @@
 			
 			var lier_element = reversJson(elements_lies);// batiment parent = principale, batiments enfants
 			
-			
+			var infos = {
+                "bati_indifferencie.3616112": "Centrale",
+                "bati_indifferencie.3669672" : "Hopital"
+            }
+
 			//console.log(elements_lies);
 			//console.log(lier_element);
 
@@ -216,11 +220,9 @@
                             var id = interAttributes.id.array[face];
                             var batchTable = intersects[i].object.parent.features[id].properties;
                             console.log(batchTable.id);
-                            /*// console.log(intersects[i], batchTable,batchTable.z_min);
-                            selected_build.push([intersects[i], id, []])
-                            let tmp_coll = colorAllObjectWithId(intersects[i], id, [0, 0, 0]);
+
+                            // console.log(intersects[i], batchTable,batchTable.z_min);
                             let coord_moy = coordsMoyAllObjectWithId(intersects[i].object, id);
-                            selected_build[selected_build.length-1][2]=tmp_coll;
                             Object.keys(batchTable).map(function(objectKey) {
                                 var value = batchTable[objectKey];
                                 // if the value is a integer or not
@@ -229,9 +231,19 @@
                                 return true;
                             });
                             htmlInfo.innerHTML +='<li><b>position moy : </b> ['+ coord_moy[0] +', '+ coord_moy[1] + ', '+ (batchTable.hauteur/2+ batchTable.z_min) +']</li>';
-                            coord_moy[2]*=batchTable.hauteur+ batchTable.z_max + 15 ;
-                            //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
-                            addMarqueur(coord_moy, 0xff0000, "test");*/
+                            if(lier_element[batchTable.id]){
+                                htmlInfo.innerHTML +='<li><b>Bâtiment principal : </b>'+ infos[batchTable.id] +'</li>';
+                            }
+                            if(elements_lies[batchTable.id]){
+                                htmlInfo.innerHTML +='<li><b>Bâtiment lié avec : </b>';
+                                for(var i=0; i<elements_lies[batchTable.id].length; i++){
+                                    htmlInfo.innerHTML +='"'+infos[elements_lies[batchTable.id][i]]+'" ';
+                                }
+                                htmlInfo.innerHTML +='</li>';
+                            }
+                            else {
+                                htmlInfo.innerHTML +='<li><b>Bâtiment non lié</b></li>';
+                            }
                             return;
                         }
                     }
@@ -291,7 +303,7 @@
                                         var mesh = element.children[c].children[0];
                                         for (var j = 0; j < mesh.geometry.attributes.zmin.count; ++j) {
                                             let id = mesh.geometry.attributes.id.array[j];
-                                            if (parent.features[id].properties.id == "bati_indifferencie.3616112" && menuGlobe.gui.__controllers[2].object.select == true){
+                                            if (lier_element[parent.features[id].properties.id] && menuGlobe.gui.__controllers[2].object.select == true){
                                                 //console.log(id);
                                                 //console.log(parent.features[id].properties);
                                                 mesh.geometry.attributes.color.array[j * 3] = 255;
@@ -302,30 +314,36 @@
                                                 if (h > 0 && h < value) {
                                                     var coord = coordsMoyAllObjectWithId(mesh, id);
                                                     coord[2]+=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
-                                                    var a = globeView.scene.getObjectByName("test2");
-		                                            if (!a) addMarqueur(coord, 0xffff00, "test2");
+                                                    var a = globeView.scene.getObjectByName(parent.features[id].properties.id);
+		                                            if (!a) addMarqueur(coord, 0xffff00, parent.features[id].properties.id);
                                                 } else {
-                                                    var a = globeView.scene.getObjectByName("test2");
+                                                    var a = globeView.scene.getObjectByName(parent.features[id].properties.id);
 		                                            if (a) globeView.scene.remove(a);
                                                 }
-                                            } else if (elements_lies[parent.features[id].properties.id] && menuGlobe.gui.__controllers[2].object.select == true && lier(parent.features[id].properties.id, "bati_indifferencie.3616112")){
-                                                var b = globeView.scene.getObjectByName("test2"); 
-                                                if (b) {
-                                                    mesh.geometry.attributes.color.array[j * 3] = 0;
-                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
-                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
-                                                    mesh.geometry.attributes.color.needsUpdate = true;
-                                                    var coord = coordsMoyAllObjectWithId(mesh, id);
-                                                    coord[2]+=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
-                                                    addGroupMarqueur(coord, 0xffff00, "test3");
-                                                }else{
-                                                    mesh.geometry.attributes.color.array[j * 3] = 0;
-                                                    mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
-                                                    mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
-                                                    mesh.geometry.attributes.color.needsUpdate = true;
-                                                    var a = globeView.scene.getObjectByName("test3");
-		                                            if (a) globeView.scene.remove(a);
+                                            } else if (elements_lies[parent.features[id].properties.id] 
+                                            && menuGlobe.gui.__controllers[2].object.select == true ){
+                                                //&& lier(parent.features[id].properties.id, "bati_indifferencie.3616112"
+                                            
+                                                for (var i =0; i<elements_lies[parent.features[id].properties.id].length; i++){
+                                                    var b = globeView.scene.getObjectByName(elements_lies[parent.features[id].properties.id][i]); 
+                                                    if (b) {
+                                                        mesh.geometry.attributes.color.array[j * 3] = 0;
+                                                        mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                        mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                                        mesh.geometry.attributes.color.needsUpdate = true;
+                                                        var coord = coordsMoyAllObjectWithId(mesh, id);
+                                                        coord[2]+=parent.features[id].properties.hauteur+ parent.features[id].properties.z_max + 15 ;
+                                                        addGroupMarqueur(coord, 0xffff00, "test3"+ elements_lies[parent.features[id].properties.id][i]);
+                                                    }else{
+                                                        mesh.geometry.attributes.color.array[j * 3] = 0;
+                                                        mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
+                                                        mesh.geometry.attributes.color.array[j * 3 + 2] = 0;
+                                                        mesh.geometry.attributes.color.needsUpdate = true;
+                                                        var a = globeView.scene.getObjectByName("test3"+elements_lies[parent.features[id].properties.id][i]);
+                                                        if (a) globeView.scene.remove(a);
+                                                    }
                                                 }
+                                                
                                             }
                                             else{
                                                 var h = mesh.geometry.attributes.zmin.array[j]; 
