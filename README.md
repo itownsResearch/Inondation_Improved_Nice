@@ -44,4 +44,20 @@ Fichier Feature2Mesh fonction [coordinateToPolygonExtruded](https://github.com/i
 - pb 2 : la modification du Feature2Mesh.js n'entraine aucun changement dans l'affichage. Comment faire en sorte que les changements soient pris en compte ?
 
 <h2>Installation</h2>
+
 [Lien vers les instructions d'installation](https://gitlab.com/LSchlegel/itowns_inondation/blob/master/BUILDING.md)
+
+<h2>Guide d'utilisation</h2>
+
+Notre application sert à visualiser une innondation sur le secteur de Lyon. En fonction du niveau d'innondation la couleur des bâtiments change.
+
+Toutes les fonctionnalités de base d'Itowns sont reprises.
+
+Avec le menu de gauche vous pourrez :
+- Changer le niveau de l'eau (Water Level),
+- Afficher des lien entre certains bâtiments, comme par exemple des liens entre une centrale électrique et les bâtiments qu'elle fournit en électricité (bouton "lien").
+- Afficher en couleur les bâtiments qui possèdent des liens (bouton "select").
+
+Au survol d'un bâtiment avec la souris on peut visualiser les informations du bâtiment dans une fenêtre qui s'ouvre en haut à droite. Au clic sur un bâtiment les informations sur les liens du bâtiment se rajoutent dans la fenêtre déjà ouverte :
+- Fonction du bâtiment, si celui-ci est important,
+- Lien du bâtiment avec le ou les bâtiment(s) important(s) du quel il dépend.
