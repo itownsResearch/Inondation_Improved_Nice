@@ -144,7 +144,7 @@ globeView.addLayer({
     //     meshes.push(mesh);
     // },
     filter: acceptFeature,
-    url: 'http://wxs.ign.fr/72hpsel8j8nhb5qgdh07gcyp/geoportail/wfs?',
+    url: 'https://wxs.ign.fr/oej022d760omtb9y4b19bubh/geoportail/wfs?',
     networkOptions: { crossOrigin: 'anonymous' },
     protocol: 'wfs',
     version: '2.0.0',
@@ -287,7 +287,7 @@ function modify_level(attribute, alt) {
 //     size: 5,
 //     onMeshCreated: configPointMaterial,
 //     filter: selectRoad,
-//     url: 'http://wxs.ign.fr/72hpsel8j8nhb5qgdh07gcyp/geoportail/wfs?',
+//     url: 'https://wxs.ign.fr/oej022d760omtb9y4b19bubh/geoportail/wfs?',
 //     networkOptions: { crossOrigin: 'anonymous' },
 //     protocol: 'wfs',
 //     version: '2.0.0',
