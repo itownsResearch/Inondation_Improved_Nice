@@ -203,8 +203,6 @@ function modify_level(attribute, alt) {
       //mesh.lookAt(new THREE.Vector3(0, 0, 0));
       //mesh.rotateX(-Math.PI / 2);
   
-  
-  
       // update coordinate of the mesh
       mesh.updateMatrixWorld();
   

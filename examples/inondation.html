@@ -73,24 +73,9 @@
 
 
 			var elements_lies = { // batiment enfant, batiments parents = principales
-				"bati_remarquable.40735" :["bati_indifferencie.8150245", "bati_indifferencie.16891511"],
-				"bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
-				"bati_industriel.2339424" :["bati_indifferencie.3616112"],
-				"bati_indifferencie.28964625" :["bati_indifferencie.3616112", "bati_indifferencie.3669672"], 
-				"bati_indifferencie.3672662" :["bati_indifferencie.3616112"], 
-				"bati_indifferencie.3672661" :["bati_indifferencie.3616112"],
-				"bati_industriel.284404" :["bati_indifferencie.3616112"],
-				"bati_industriel.284403" :["bati_indifferencie.3616112"],
-				"bati_indifferencie.4127882" :["bati_indifferencie.3616112"],
-				"bati_indifferencie.19592695" : ["bati_indifferencie.3669672"],
-				"bati_industriel.779713" : ["bati_indifferencie.3669672"],
-				"bati_indifferencie.3327128" : ["bati_indifferencie.3669672"],
-				"bati_indifferencie.3327113" : ["bati_indifferencie.3669672"],
-				"bati_indifferencie.23611407" : ["bati_indifferencie.3669672"],
-				"bati_indifferencie.17807925" : ["bati_indifferencie.3669672"],
-				"bati_industriel.579661" : ["bati_indifferencie.3669672"],
-				"bati_indifferencie.5325305" : ["bati_indifferencie.3669672"],
-				"bati_indifferencie.3669675" : ["bati_indifferencie.3669672"]
+				"bati_remarquable.40735" :["bati_indifferencie.27314065", "bati_indifferencie.16891511", "bati_indifferencie.16891470"],
+				"bati_indifferencie.16891347" :["bati_indifferencie.7385890","bati_indifferencie.16891379"]
+				
 			};
 			
 			var lier_element = reversJson(elements_lies);// batiment parent = principale, batiments enfants
@@ -130,7 +115,8 @@
                         function manageLine(value) {
 							if (value==true){
 								Object.keys(lier_element).map(function(objectKey) {
-									create_ligne(objectKey);
+                                    //create_ligne(objectKey);
+                                    create_Spline(objectKey);
 								});
 							} else {
 								var lines = globeView.scene.getObjectByName("lines");
@@ -145,7 +131,8 @@
                     globeView.controls.setTilt(45, true);
                     checkWaterHeightForBuildings(168);
 					Object.keys(lier_element).map(function(objectKey) {
-						create_ligne(objectKey);
+                        //create_ligne(objectKey);
+                        create_Spline(objectKey);
 					});
                 });
             });
@@ -493,6 +480,76 @@
                 globeView.scene.add(lines);
             }
 
+
+            function create_Spline(parent){
+				var THREE = itowns.THREE;
+                if(!coords_elements_lies){
+                    coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
+                }
+				var lines = globeView.scene.getObjectByName("lines");
+				if (!lines){
+					lines = new THREE.Group();
+					lines.name="lines";
+				}
+                for (var i =0; i<lier_element[parent].length; i++){
+					if ( coords_elements_lies[lier_element[parent][i]]){
+						var coords_1=coords_elements_lies[parent];
+						var coords_2=coords_elements_lies[lier_element[parent][i]];
+						var material = new THREE.LineBasicMaterial({
+							color: 0x0000ff
+						});
+						var meshCoord_1 = new itowns.Coordinates('EPSG:4326', coords_1[1], coords_1[0], coords_1[2]).as(globeView.referenceCrs);
+                        var meshCoord_2 = new itowns.Coordinates('EPSG:4326', coords_2[1], coords_2[0], coords_2[2]).as(globeView.referenceCrs);
+                        
+						var geometry = new THREE.Geometry();
+						geometry.vertices.push(
+							new THREE.Vector3( meshCoord_1.x(), meshCoord_1.y(), meshCoord_1.z()),
+							new THREE.Vector3( meshCoord_2.x(), meshCoord_2.y(), meshCoord_2.z())
+                        );
+                        
+                        // Bezier
+                        var bezierMiddleControlPoint = geometry.vertices[0].clone().add(geometry.vertices[1]).multiplyScalar(0.500004); // Average alt * alphaPseudoNormal
+                        var curve = new THREE.QuadraticBezierCurve3(
+                            geometry.vertices[0],
+                            bezierMiddleControlPoint, /*new THREE.Vector3(geometry.vertices[0].x + 40, geometry.vertices[0].y + 40, geometry.vertices[0].z + 40),*/
+                            geometry.vertices[1]
+                        );
+
+                        var points = curve.getPoints( 50 );
+                        //var geometryCurve = new THREE.BufferGeometry().setFromPoints( points );
+                        //var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+/*
+                        // Create a line 3D
+                        var curveObject = new THREE.Line( geometryCurve, material );
+                        curveObject.name = "line";
+                        lines.add( curveObject);
+*/
+
+                        // Create a Tube Geometry out of the curve3
+                        var segments = 20, tubeRadius = 2, radiusSegments = 8;
+                        var geometryTube = new THREE.TubeGeometry(  curve, segments, tubeRadius, radiusSegments, false );
+                        var material = new THREE.MeshNormalMaterial( { color: 0x00ff00, transparent: true, opacity:0.8 } );
+                        var mesh = new THREE.Mesh( geometryTube, material );
+                        mesh.name = "line";
+						lines.add( mesh);
+                        //globeView.scene.add( mesh );
+
+                        //var line = new THREE.Line( geometry, material );
+						//line.name = "line";
+						//lines.add( line );
+					}
+                }
+                globeView.lines = lines;
+                globeView.scene.add(lines);
+
+                var myID = globeView.mainLoop.gfxEngine.getUniqueThreejsLayer();
+                globeView.lines.traverse((obj) => { obj.layers.set(myID); });
+                globeView.camera.camera3D.layers.enable(myID);
+
+            }
+
+
+
             function reversJson(jsonEl){
                 var tmp ={};
                 Object.keys(jsonEl).map(function(objectKey) {
@@ -523,7 +580,7 @@
 										let id = mesh.geometry.attributes.id.array[j];
 										if (lier_element[parent.features[id].properties.id] || elements_lies[parent.features[id].properties.id]){
 											tmp[parent.features[id].properties.id] = coordsMoyAllObjectWithId(mesh, id);
-											tmp[parent.features[id].properties.id][2]=parent.features[id].properties.hauteur+ parent.features[id].properties.z_min;
+											tmp[parent.features[id].properties.id][2]=/*parent.features[id].properties.hauteur + */8 + parent.features[id].properties.z_min;
 											//console.log(parent.features[id].properties.id);
 										}
 									}
