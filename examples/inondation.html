@@ -73,7 +73,7 @@
 
 
 			var elements_lies = { // batiment enfant, batiments parents = principales
-				"bati_indifferencie.17807922" :["bati_indifferencie.3616112", "bati_indifferencie.3669672"],
+				"bati_remarquable.40735" :["bati_indifferencie.8150245", "bati_indifferencie.16891511"],
 				"bati_indifferencie.17807920" :["bati_indifferencie.3616112"], 
 				"bati_industriel.2339424" :["bati_indifferencie.3616112"],
 				"bati_indifferencie.28964625" :["bati_indifferencie.3616112", "bati_indifferencie.3669672"], 
@@ -96,7 +96,7 @@
 			var lier_element = reversJson(elements_lies);// batiment parent = principale, batiments enfants
 			
 			var infos = {
-                "bati_indifferencie.3616112": "Centrale",
+                "bati_remarquable.40735": "Centrale",
                 "bati_indifferencie.3669672" : "Hopital"
             }
 
@@ -384,7 +384,7 @@
                      layer.whenReady.then( function _(layer) {
                 //         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
                 //         debug.GeometryDebug.addWireFrameCheckbox(gui, globeView, layer);
-                         window.addEventListener('mousemove', picking, false);
+                       //  window.addEventListener('mousemove', picking, false);
                          window.addEventListener('click', picking2, false);
                      });
                 }
