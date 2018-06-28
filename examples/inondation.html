@@ -94,8 +94,8 @@
         //     "bati_indifferencie.3669672": "Hopital"
         // }
 
-        //console.log(elements_lies);
-        //console.log(lier_element);
+        // console.log(elements_lies);
+        // console.log(lier_element);
 
 
         var selected_build = [];
@@ -138,9 +138,10 @@
             console.info('Globe initialized');
             promises.unshift(loadElements_lies);
             promises.unshift(loadInfos);
+            let localHeight = 0;
             Promise.all(promises).then(function () {
-                console.log('l_elmt ', lier_element);
-                console.log('elmt_l', elements_lies);
+                console.log('l_elmts ', lier_element);
+                console.log('elmts_l', elements_lies);
                 console.log('infos ', infos);
                 //menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
                 //menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
@@ -148,7 +149,7 @@
                 menuGlobe.gui.add({ WatherLevel: 0.0 }, 'WatherLevel').min(-10.0).max(50.0).onChange((
                     function updateWatherLevel(value) {
                         adjustAltitude(value);
-                        checkWaterHeightForBuildings(168 + value);
+                        checkWaterHeightForBuildings(localHeight + value);
                         globeView.notifyChange(true);
                     }));
                 menuGlobe.gui.add({ lien: true }, "lien").name("lien").onChange((
@@ -165,13 +166,14 @@
                     }));
                 menuGlobe.gui.add({ select: false }, "select").name("select").onChange((
                     function manageSelect(value) {
-                        checkWaterHeightForBuildings(168);
+                        checkWaterHeightForBuildings(localHeight);
                     }));
                 // récupération de la valeur du niveau de l'eau menuGlobe.gui.__controllers[0].object.WatherLevel
                 globeView.controls.setTilt(45, true);
-                checkWaterHeightForBuildings(168);
+                checkWaterHeightForBuildings(localHeight);
                 Object.keys(lier_element).map(function (objectKey) {
                     //create_ligne(objectKey);
+                    console.log("objectKey", objectKey);
                     create_Spline(objectKey);
                 });
             });
@@ -321,7 +323,7 @@
             for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
                 globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
                     //  console.log("ELEMENT: ", element);
-                    if (element.level != undefined && element.level == 14 && element.visible) {
+                    if (element.level != undefined && element.level == 15 && element.visible) {
                         //console.log(element);
                         for (var c = 0; c < element.children.length; ++c) {
 
@@ -522,8 +524,10 @@
 
 
         function create_Spline(parent) {
+            console.log("createSpline");
             var THREE = itowns.THREE;
             if (!coords_elements_lies) {
+                console.log("empyyyyy");
                 coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
             }
             var lines = globeView.scene.getObjectByName("lines");
@@ -531,10 +535,15 @@
                 lines = new THREE.Group();
                 lines.name = "lines";
             }
+    
             for (var i = 0; i < lier_element[parent].length; i++) {
+                console.log("oooqqqq", lier_element[parent].length);
+                console.log("coords_elements_lies", coords_elements_lies);
                 if (coords_elements_lies[lier_element[parent][i]]) {
+                    console.log(coords_elements_lies);
                     var coords_1 = coords_elements_lies[parent];
                     var coords_2 = coords_elements_lies[lier_element[parent][i]];
+                    console.log("coords 1 2",coords_1, coords_2 );
                     var material = new THREE.LineBasicMaterial({
                         color: 0x0000ff
                     });
@@ -610,7 +619,7 @@
             for (var i = 0; i < globeView.wgs84TileLayer.level0Nodes.length; ++i) {
                 globeView.wgs84TileLayer.level0Nodes[i].traverse(function (element) {
                     //  console.log("ELEMENT: ", element);
-                    if (element.level != undefined && element.level == 14 && element.visible) {
+                    if (element.level != undefined && element.level == 15 && element.visible) {
                         //console.log(element);
                         for (var c = 0; c < element.children.length; ++c) {
                             if (element.children[c].type == "Group") {
