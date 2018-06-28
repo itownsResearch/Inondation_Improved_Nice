@@ -73,27 +73,27 @@ function initNodeElevationTextureFromParent(node, parent, layer) {
     }
 }
 
-function getIndiceWithPitch(i, pitch, w) {
-    // Return corresponding indice in parent tile using pitch
-    const currentX = (i % w) / w;  // normalized
-    const currentY = Math.floor(i / w) / w; // normalized
-    const newX = pitch.x; + currentX * pitch.z;
-    const newY = pitch.y; + currentY * pitch.w;
-    const newIndice = Math.floor(newY * w) * w + Math.floor(newX * w);
-    return newIndice;
-}
+// function getIndiceWithPitch(i, pitch, w) {
+//     // Return corresponding indice in parent tile using pitch
+//     const currentX = (i % w) / w;  // normalized
+//     const currentY = Math.floor(i / w) / w; // normalized
+//     const newX = pitch.x; + currentX * pitch.z;
+//     const newY = pitch.y; + currentY * pitch.w;
+//     const newIndice = Math.floor(newY * w) * w + Math.floor(newX * w);
+//     return newIndice;
+// }
 
 function insertSignificantValuesFromParent(texture, node, parent, layer) {
     if (parent.material && parent.material.getElevationLayerLevel() > EMPTY_TEXTURE_ZOOM) {
-        const coords = node.getCoordsForLayer(layer);
-        const textureParent = parent.material.textures[l_ELEVATION][0];
-        const pitch = coords[0].offsetToParent(parent.material.textures[l_ELEVATION][0].coords);
+        // const coords = node.getCoordsForLayer(layer);
+        // const textureParent = parent.material.textures[l_ELEVATION][0];
+        // const pitch = coords[0].offsetToParent(parent.material.textures[l_ELEVATION][0].coords);
         const tData = texture.image.data;
         const l = tData.length;
 
         for (var i = 0; i < l; ++i) {
             if (tData[i] === layer.noDataValue) {
-                tData[i] = 0;//textureParent.image.data[getIndiceWithPitch(i, pitch, 256)];
+                tData[i] = 0;// textureParent.image.data[getIndiceWithPitch(i, pitch, 256)];
             }
         }
     }
