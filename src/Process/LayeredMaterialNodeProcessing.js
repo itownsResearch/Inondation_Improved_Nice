@@ -77,8 +77,8 @@ function getIndiceWithPitch(i, pitch, w) {
     // Return corresponding indice in parent tile using pitch
     const currentX = (i % w) / w;  // normalized
     const currentY = Math.floor(i / w) / w; // normalized
-    const newX = pitch.x + currentX * pitch.z;
-    const newY = pitch.y + currentY * pitch.w;
+    const newX = pitch.x; + currentX * pitch.z;
+    const newY = pitch.y; + currentY * pitch.w;
     const newIndice = Math.floor(newY * w) * w + Math.floor(newX * w);
     return newIndice;
 }
@@ -93,7 +93,7 @@ function insertSignificantValuesFromParent(texture, node, parent, layer) {
 
         for (var i = 0; i < l; ++i) {
             if (tData[i] === layer.noDataValue) {
-                tData[i] = textureParent.image.data[getIndiceWithPitch(i, pitch, 256)];
+                tData[i] = 0;//textureParent.image.data[getIndiceWithPitch(i, pitch, 256)];
             }
         }
     }
