@@ -1,8 +1,8 @@
 <h1>Modélisation de l'inondation de Lyon</h1>
 
-
+<p align="center">
 <img src="https://i.imgflip.com/2d25fn.gif" alt="Sample visualization">
-
+</p>
 <h2>Analyse du sujet</h2>
 
 Nous devons réaliser un site web pour visualiser, en fonction du niveau de l'inondation de Lyon, les bâtiments touchés (directement ou indirectement).
