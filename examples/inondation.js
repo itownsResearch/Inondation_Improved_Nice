@@ -150,7 +150,7 @@ globeView.addLayer({
     version: '2.0.0',
     id: 'WFS Buildings',
     typeName: 'BDTOPO_BDD_WLD_WGS84G:bati_remarquable,BDTOPO_BDD_WLD_WGS84G:bati_indifferencie,BDTOPO_BDD_WLD_WGS84G:bati_industriel',
-    level: 14,
+    level: 15,
     projection: 'EPSG:4326',
     ipr: 'IGN',
     options: {
@@ -202,8 +202,6 @@ function modify_level(attribute, alt) {
       //mesh.position.copy(meshCoord.as(globeView.referenceCrs).xyz());
       //mesh.lookAt(new THREE.Vector3(0, 0, 0));
       //mesh.rotateX(-Math.PI / 2);
-  
-  
   
       // update coordinate of the mesh
       mesh.updateMatrixWorld();
