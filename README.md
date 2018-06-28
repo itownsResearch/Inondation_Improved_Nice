@@ -1,6 +1,7 @@
 <h1>Modélisation de l'inondation de Lyon</h1>
 
-![Exemple de visualisation](Itowns.png "Exemple de visualisation")
+
+<img src="https://i.imgflip.com/2d25fn.gif" alt="Sample visualization">
 
 <h2>Analyse du sujet</h2>
 
