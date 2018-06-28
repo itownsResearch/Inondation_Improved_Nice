@@ -379,9 +379,10 @@
                                         if (h > 0 && h < value) {
                                             mesh.geometry.attributes.color.array[j * 3] = 5 * (value - h);
                                             mesh.geometry.attributes.color.array[j * 3 + 1] = 0;
-                                            mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
+                                            mesh.geometry.attributes.color.array[j * 3 + 2] = 128;
                                             mesh.geometry.attributes.color.needsUpdate = true;
                                         } else {
+
                                             mesh.geometry.attributes.color.array[j * 3] = 255;
                                             mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
                                             mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
