@@ -106,8 +106,10 @@
         menuGlobe.view = globeView;
 
         let time = 0;
-        let localHeight = 0;
+        let localHeight = 10;
         let sliderWaterHeight = 0;
+        let arrCursor = [];
+        let arrUnderWaterMaster = [];
                
         let lier_element;
         let elements_lies;
@@ -183,12 +185,12 @@
                     */
                 // récupération de la valeur du niveau de l'eau menuGlobe.gui.__controllers[0].object.WatherLevel
                 globeView.controls.setTilt(45, true);
-                checkWaterHeightForBuildings(localHeight);
+                checkWaterHeightForBuildings(localHeight + sliderWaterHeight);
                 var lines = globeView.scene.getObjectByName("lines");
                 if (lines) globeView.scene.remove(lines);
                 Object.keys(lier_element).map(function (objectKey) {
                     //create_ligne(objectKey);
-                    console.log("objectKey", objectKey);
+                    console.log("objectKey", objectKey, lier_element);
                     create_Spline(objectKey);
                 });
 
@@ -237,9 +239,9 @@
                             return true;
                         });
                         htmlInfo.innerHTML += '<li><b>position moy : </b> [' + coord_moy[0] + ', ' + coord_moy[1] + ', ' + (batchTable.hauteur / 2 + batchTable.z_min) + ']</li>';
-                        coord_moy[2] *= batchTable.hauteur + batchTable.z_max + 15;
+                        coord_moy[2] *= batchTable.hauteur + batchTable.z_max + 25;
                         //coord_moy=[intersects[i].point.x, intersects[i].point.y, intersects[i].point.z];
-                        addMarqueur(coord_moy, 0xff0000, "test");
+                        addMarqueur(coord_moy, 0xff00, "test");
                         return;
                     }
                 }
@@ -333,6 +335,13 @@
             tmp_coord[2] /= count;
             return tmp_coord;
         }
+
+        function remove(array, element) {
+            console.log("remove",array);
+            return array.filter(e => e !== element);
+        }
+
+
         // Dumb function as an example to color buildings under water
         // Should obviously be done in shaders but it shows how to access building meshes attribute
         function checkWaterHeightForBuildings(value) {
@@ -360,12 +369,18 @@
                                         var h = mesh.geometry.attributes.zmin.array[j];
                                         if (h > 0 && h < value) {
                                             var coord = coordsMoyAllObjectWithId(mesh, id);
-                                            coord[2] += parent.features[id].properties.hauteur + parent.features[id].properties.z_max + 15;
+                                            coord[2] += parent.features[id].properties.hauteur + parent.features[id].properties.z_max + 25;
                                             var a = globeView.scene.getObjectByName(parent.features[id].properties.id);
-                                            if (!a) addMarqueur(coord, 0xffff00, parent.features[id].properties.id);
+                                            //console.log("aaaaaaaa",a);
+                                            
+                                            if (!a) {
+                                                addMarqueur(coord, 0xffff00, parent.features[id].properties.id); 
+                                                arrUnderWaterMaster.push(parent.features[id].properties.id);
+                                            }
                                         } else {
                                             var a = globeView.scene.getObjectByName(parent.features[id].properties.id);
                                             if (a) globeView.scene.remove(a);
+                                            arrUnderWaterMaster = remove(arrUnderWaterMaster, parent.features[id].properties.id);
                                         }
                                     } else if (elements_lies[parent.features[id].properties.id]
                                         /*&& menuGlobe.gui.__controllers[2].object.select == true*/) {
@@ -379,8 +394,8 @@
                                                 mesh.geometry.attributes.color.array[j * 3 + 2] = 255;
                                                 mesh.geometry.attributes.color.needsUpdate = true;
                                                 var coord = coordsMoyAllObjectWithId(mesh, id);
-                                                coord[2] += parent.features[id].properties.hauteur + parent.features[id].properties.z_max + 15;
-                                                addGroupMarqueur(coord, 0xffff00, "test3" + elements_lies[parent.features[id].properties.id][i]);
+                                                coord[2] += parent.features[id].properties.hauteur + parent.features[id].properties.z_max + 25;
+                                                addGroupMarqueur(coord, 0x66ff99, "test3" + elements_lies[parent.features[id].properties.id][i]);
                                             } else {
                                                 mesh.geometry.attributes.color.array[j * 3] = 0;
                                                 mesh.geometry.attributes.color.array[j * 3 + 1] = 255;
@@ -415,19 +430,14 @@
                     }
 
                 })
-
+                console.log(arrUnderWaterMaster);
                 globeView.notifyChange(true);
             }
 
         }
 
         for (const layer of globeView.getLayers()) {
-            if (layer.id === 'WFS Bus lines') {
-                layer.whenReady.then(function _(layer) {
-                    var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
-                    debug.GeometryDebug.addMaterialLineWidth(gui, globeView, layer, 1, 10);
-                });
-            }
+
             if (layer.id === 'WFS Buildings') {
                 layer.whenReady.then(function _(layer) {
                     //         var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
@@ -436,19 +446,14 @@
                     window.addEventListener('click', picking2, false);
                 });
             }
-            if (layer.id === 'WFS Route points') {
-                layer.whenReady.then(function _(layer) {
-                    var gui = debug.GeometryDebug.createGeometryDebugUI(menuGlobe.gui, globeView, layer);
-                    debug.GeometryDebug.addMaterialSize(gui, globeView, layer, 1, 50);
-                });
-            }
         }
+
         function addMarqueur(coords, color, name) {
             // creation of the new mesh (a cylinder)
             //console.log("e");
             var THREE = itowns.THREE;
             var geometry = new THREE.CylinderGeometry(20, 20, 3, 8);
-            var material = new THREE.MeshBasicMaterial({ color: color });
+            var material = new THREE.MeshBasicMaterial({transparent:true, opacity:0.8, color: color });
             var mesh = new THREE.Mesh(geometry, material);
 
             // get the position on the globe, from the camera
@@ -467,8 +472,10 @@
             mesh.updateMatrixWorld();
             //console.log(mesh);
             // add the mesh to the scene
+            arrCursor.push(mesh);
             globeView.scene.add(mesh);
         }
+
         function addGroupMarqueur(coords, color, name) {
             // creation of the new mesh (a cylinder)
             //console.log("e");
@@ -480,7 +487,7 @@
                 globeView.scene.add(group);
             }
             var geometry = new THREE.CylinderGeometry(20, 20, 3, 8);
-            var material = new THREE.MeshBasicMaterial({ color: color });
+            var material = new THREE.MeshBasicMaterial({ transparent:true, opacity:0.2, color: color });
             var mesh = new THREE.Mesh(geometry, material);
 
             // get the position on the globe, from the camera
@@ -499,7 +506,6 @@
             //console.log(mesh);
             // add the mesh to the scene
             group.add(mesh);
-
             //console.log(group);
         }
         function lier(clef, value) {
@@ -544,33 +550,49 @@
         }
 
        
-
+        // Update function responsible for animation
         function refreshLinks(){
 
-             time += 1;
-             if(time % 60 == 0){
+            time += 1;
+            var lines = globeView.scene.getObjectByName("lines");
+            if(time % 120 == 0){
 
-                var lines = globeView.scene.getObjectByName("lines");
+                //var lines = globeView.scene.getObjectByName("lines");
                 if (lines) globeView.scene.remove(lines);
-            
                 checkWaterHeightForBuildings(localHeight + sliderWaterHeight);
                 Object.keys(lier_element).map(function (objectKey) {
-                            //create_ligne(objectKey);
-                 create_Spline(objectKey);
+                    create_Spline(objectKey);
                 });
             }        
-             requestAnimationFrame(refreshLinks);
+
+            // Animate links and cursors
+            for(var i = 0; i < arrCursor.length; ++i){
+                var c = arrCursor[i];
+                c.rotation.z += 0.01;
+                c.updateMatrixWorld();
+            }
+
+            if(lines != undefined){ //console.log(lines);
+                for (var i = 0; i < lines.children.length; ++i ){
+                    var l = lines.children[i]; //console.log(l.name);
+                    if (arrUnderWaterMaster.includes(l.name)){
+                        l.morphTargetInfluences[ 0 ] = ( 1 + Math.sin( 0.1 * time ) );// / 2;
+                        l.material.needsUpdate = true;
+                    }else{
+                        l.morphTargetInfluences[ 0 ] = 0;
+                        l.material.needsUpdate = true;
+                    }
+                }
+            }
+            
+            requestAnimationFrame(refreshLinks);
+            globeView.notifyChange(true);
         }
 
 
+
         function create_Spline(parent) {
-           // console.log("createSpline");
-          /*  if(globeView.lines){
-                globeView.scene.remove(globeView.lines);
-                globeView.lines = null;
-            }
-*/
-            
+             
             var THREE = itowns.THREE;
          //   if (!coords_elements_lies) {
                 coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
@@ -584,6 +606,9 @@
             for (var i = 0; i < lier_element[parent].length; i++) {
                 if (coords_elements_lies[lier_element[parent][i]]) {
                    // console.log(coords_elements_lies[lier_element[parent][i]]);
+                   //console.log("parent", parent);
+                    // We check the parent height to ad as a property to the lines so that we easily know if link works or not
+
                     var coords_1 = coords_elements_lies[parent];
                     var coords_2 = coords_elements_lies[lier_element[parent][i]];
                     //console.log("coords 1 2",coords_1, coords_2 );
@@ -601,7 +626,7 @@
                         );
 
                         // Bezier
-                        var bezierMiddleControlPoint = geometry.vertices[0].clone().add(geometry.vertices[1]).multiplyScalar(0.500004); // Average alt * alphaPseudoNormal
+                        var bezierMiddleControlPoint = geometry.vertices[0].clone().add(geometry.vertices[1]).multiplyScalar(0.500005); // Average alt * alphaPseudoNormal
                         var curve = new THREE.QuadraticBezierCurve3(
                             geometry.vertices[0],
                             bezierMiddleControlPoint, /*new THREE.Vector3(geometry.vertices[0].x + 40, geometry.vertices[0].y + 40, geometry.vertices[0].z + 40),*/
@@ -609,21 +634,48 @@
                         );
 
                         var points = curve.getPoints(50);
-                        //var geometryCurve = new THREE.BufferGeometry().setFromPoints( points );
-                        //var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
-                        /*
-                                                // Create a line 3D
-                                                var curveObject = new THREE.Line( geometryCurve, material );
-                                                curveObject.name = "line";
-                                                lines.add( curveObject);
-                        */
-
+                     
                         // Create a Tube Geometry out of the curve3
                         var segments = 20, tubeRadius = 2, radiusSegments = 8;
                         var geometryTube = new THREE.TubeGeometry(curve, segments, tubeRadius, radiusSegments, false);
-                        var material = new THREE.MeshNormalMaterial({ transparent: true, opacity: 0.8 });
+                        var geometryTube2 = new THREE.TubeGeometry(curve, segments, tubeRadius*1.4, radiusSegments, false);
+                        var v1 = geometryTube.vertices;
+                        var v2 = geometryTube2.vertices;
+                        var geometryRandom = geometryTube.clone();
+
+                        for ( var a = 0; a < v1.length; a ++ ) {
+                            
+                            var v = geometryRandom.vertices[a];
+                            scale =  a / v2.length;
+
+                            v.x += Math.random()*5;
+                            v.y += Math.random()*5;
+                            v.z += Math.random()*5;
+                        }
+
+                        // Let's compute a conic shape using the 2 tubes
+           /*             for ( var a = 0; i < v2.length; a ++ ) {
+
+                            scale =  i / v2.length;
+
+                            v2[ a ].x -= (v2[a].x - v1[a].x) * scale;
+                            v2[ a ].y -= (v2[a].y - v1[a].y) * scale;
+                            v2[ a ].z -= (v2[a].z - v1[a].z) * scale;
+
+                        }
+*/
+                        //console.log(geometryTube);
+                        var material = new THREE.MeshNormalMaterial({ transparent: true, opacity: 0.8, morphTargets: true/*, side: THREE.DoubleSide*/ });
+                        
+                        //generateMorphTargets(geometryTube);
+                        geometryTube.morphTargets.push( { name: 'target1', vertices: geometryRandom.vertices/*geometryTube2.vertices*/ } );
                         var mesh = new THREE.Mesh(geometryTube, material);
-                        mesh.name = "line";
+                        mesh.morphTargetInfluences[ 0 ] = ( 1 + Math.sin( 0.04 * time ) );// / 2;
+                        mesh.material.needsUpdate = true;
+                        //mesh.updateMorphTargets();
+		                //material.needsUpdate = true;
+                        //mesh.morphTargetInfluences[ 0 ] = 0.5;
+                        mesh.name = parent;//"line";
                         lines.add(mesh);
                     }
                     //globeView.scene.add( mesh );

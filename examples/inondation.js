@@ -162,10 +162,10 @@ globeView.addLayer({
 
 function modify_level(attribute, alt) {
     // position of the mesh
-    var meshCoord1 = new itowns.Coordinates("EPSG:4326", 7.0, 43.595,  30+ alt).as(globeView.referenceCrs).xyz();
-    var meshCoord2 = new itowns.Coordinates("EPSG:4326", 7.468, 43.595,  30+ alt).as(globeView.referenceCrs).xyz();
-    var meshCoord3 = new itowns.Coordinates("EPSG:4326", 7.468, 43.795, 30 + alt).as(globeView.referenceCrs).xyz();
-    var meshCoord4 = new itowns.Coordinates("EPSG:4326", 7.0, 43.795,  30+ alt).as(globeView.referenceCrs).xyz();
+    var meshCoord1 = new itowns.Coordinates("EPSG:4326", 7.15, 43.630,  10 + alt).as(globeView.referenceCrs).xyz();
+    var meshCoord2 = new itowns.Coordinates("EPSG:4326", 7.35, 43.630,  10 + alt).as(globeView.referenceCrs).xyz();
+    var meshCoord3 = new itowns.Coordinates("EPSG:4326", 7.35, 43.760,  10 + alt).as(globeView.referenceCrs).xyz();
+    var meshCoord4 = new itowns.Coordinates("EPSG:4326", 7.15, 43.760,  10 + alt).as(globeView.referenceCrs).xyz();
   
     attribute.setXYZ(0, meshCoord1.x, meshCoord1.y,  meshCoord1.z);
     attribute.setXYZ(1,  meshCoord2.x, meshCoord2.y,  meshCoord2.z);
