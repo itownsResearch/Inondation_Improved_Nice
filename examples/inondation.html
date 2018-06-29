@@ -167,6 +167,10 @@
                 menuGlobe.gui.add({ select: false }, "select").name("select").onChange((
                     function manageSelect(value) {
                         checkWaterHeightForBuildings(localHeight);
+                        Object.keys(lier_element).map(function (objectKey) {
+                            //create_ligne(objectKey);
+                            create_Spline(objectKey);
+                        });
                     }));
                 // récupération de la valeur du niveau de l'eau menuGlobe.gui.__controllers[0].object.WatherLevel
                 globeView.controls.setTilt(45, true);
@@ -526,9 +530,13 @@
 
         function create_Spline(parent) {
             console.log("createSpline");
+          /*  if(globeView.lines){
+                globeView.scene.remove(globeView.lines);
+                globeView.lines = null;
+            }
+*/
             var THREE = itowns.THREE;
             if (!coords_elements_lies) {
-                console.log("empyyyyy");
                 coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
             }
             var lines = globeView.scene.getObjectByName("lines");
@@ -538,13 +546,11 @@
             }
     
             for (var i = 0; i < lier_element[parent].length; i++) {
-                console.log("oooqqqq", lier_element[parent].length);
-                console.log("coords_elements_lies", coords_elements_lies);
                 if (coords_elements_lies[lier_element[parent][i]]) {
                     console.log(coords_elements_lies);
                     var coords_1 = coords_elements_lies[parent];
                     var coords_2 = coords_elements_lies[lier_element[parent][i]];
-                    console.log("coords 1 2",coords_1, coords_2 );
+                    //console.log("coords 1 2",coords_1, coords_2 );
                     var material = new THREE.LineBasicMaterial({
                         color: 0x0000ff
                     });
@@ -578,7 +584,7 @@
                     // Create a Tube Geometry out of the curve3
                     var segments = 20, tubeRadius = 2, radiusSegments = 8;
                     var geometryTube = new THREE.TubeGeometry(curve, segments, tubeRadius, radiusSegments, false);
-                    var material = new THREE.MeshNormalMaterial({ color: 0x00ff00, transparent: true, opacity: 0.8 });
+                    var material = new THREE.MeshNormalMaterial({ transparent: true, opacity: 0.8 });
                     var mesh = new THREE.Mesh(geometryTube, material);
                     mesh.name = "line";
                     lines.add(mesh);
@@ -590,7 +596,7 @@
                 }
             }
             globeView.lines = lines;
-            globeView.scene.add(lines);
+            globeView.scene.add(globeView.lines);
 
             var myID = globeView.mainLoop.gfxEngine.getUniqueThreejsLayer();
             globeView.lines.traverse((obj) => { obj.layers.set(myID); });
