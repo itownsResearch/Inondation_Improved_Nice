@@ -107,6 +107,7 @@
 
         let time = 0;
         let localHeight = 0;
+        let sliderWaterHeight = 0;
                
         let lier_element;
         let elements_lies;
@@ -150,9 +151,11 @@
                 //menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
                 addMeshToScene();
                 menuGlobe.gui.add({ WatherLevel: 0.0 }, 'WatherLevel').min(-10.0).max(50.0).onChange((
+
                     function updateWatherLevel(value) {
+                        sliderWaterHeight = value;
                         adjustAltitude(value);
-                        checkWaterHeightForBuildings(localHeight + value);
+                        checkWaterHeightForBuildings(localHeight + sliderWaterHeight);
                         globeView.notifyChange(true);
                     }));
                     /*
@@ -496,6 +499,8 @@
             //console.log(mesh);
             // add the mesh to the scene
             group.add(mesh);
+
+            //console.log(group);
         }
         function lier(clef, value) {
             for (var t = 0; t < elements_lies[clef].length; t++) {
@@ -548,7 +553,7 @@
                 var lines = globeView.scene.getObjectByName("lines");
                 if (lines) globeView.scene.remove(lines);
             
-                checkWaterHeightForBuildings(localHeight);
+                checkWaterHeightForBuildings(localHeight + sliderWaterHeight);
                 Object.keys(lier_element).map(function (objectKey) {
                             //create_ligne(objectKey);
                  create_Spline(objectKey);
