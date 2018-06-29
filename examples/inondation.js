@@ -3,6 +3,7 @@
 
 // Define initial camera position
 var positionOnGlobe = { longitude: 7.268, latitude: 43.695, altitude: 3000 };
+//positionOnGlobe = { longitude: 7.268, latitude: 43.720, altitude: 3000 };
 var promises = [];
 var meshes = [];
 var linesBus = [];

@@ -536,9 +536,9 @@
             }
 */
             var THREE = itowns.THREE;
-            if (!coords_elements_lies) {
+         //   if (!coords_elements_lies) {
                 coords_elements_lies = extract_coords();//id_BDTopo élément, coordonnées : [long, lat, alti]
-            }
+        //    }
             var lines = globeView.scene.getObjectByName("lines");
             if (!lines) {
                 lines = new THREE.Group();
@@ -547,7 +547,7 @@
     
             for (var i = 0; i < lier_element[parent].length; i++) {
                 if (coords_elements_lies[lier_element[parent][i]]) {
-                    console.log(coords_elements_lies);
+                    console.log(coords_elements_lies[lier_element[parent][i]]);
                     var coords_1 = coords_elements_lies[parent];
                     var coords_2 = coords_elements_lies[lier_element[parent][i]];
                     //console.log("coords 1 2",coords_1, coords_2 );
