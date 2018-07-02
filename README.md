@@ -3,6 +3,14 @@
 <p align="center">
 <img src="https://i.imgflip.com/2d25fn.gif" alt="Sample visualization">
 </p>
+
+<h1>TODO</h1>
+- Pass some process in shaders (test building height vs water for example)
+- Improve stylisation to show active and unactive links 
+- Add a small help box
+- ...
+
+<h1> Original project info: </h1>
 <h2>Analyse du sujet</h2>
 
 Nous devons réaliser un site web pour visualiser, en fonction du niveau de l'inondation de Lyon, les bâtiments touchés (directement ou indirectement).
