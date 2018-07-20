@@ -1,7 +1,7 @@
 <h1>Modélisation de l'inondation de Lyon</h1>
 
 <p align="center">
-<img src="https://i.imgflip.com/2d25fn.gif" alt="Sample visualization">
+<img src="https://i.imgflip.com/2ee3n8.gif" alt="Sample visualization">
 </p>
 
 <h1>TODO</h1>
