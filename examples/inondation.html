@@ -337,7 +337,7 @@
         }
 
         function remove(array, element) {
-            console.log("remove",array);
+            //console.log("remove",array);
             return array.filter(e => e !== element);
         }
 
@@ -568,26 +568,73 @@
             // Animate links and cursors
             for(var i = 0; i < arrCursor.length; ++i){
                 var c = arrCursor[i];
-                c.rotation.z += 0.01;
+                c.rotation.z += 0.01;   
                 c.updateMatrixWorld();
             }
 
             if(lines != undefined){ //console.log(lines);
                 for (var i = 0; i < lines.children.length; ++i ){
                     var l = lines.children[i]; //console.log(l.name);
+                    l.material.uniforms.time.value = time;
+                    
                     if (arrUnderWaterMaster.includes(l.name)){
-                        l.morphTargetInfluences[ 0 ] = ( 1 + Math.sin( 0.1 * time ) );// / 2;
-                        l.material.needsUpdate = true;
+                        l.material.uniforms.animated.value = 0.;
+                        //l.morphTargetInfluences[ 0 ] = ( 1 + Math.sin( 0.1 * time ) );// / 2;
+                        //l.material.needsUpdate = true;
                     }else{
-                        l.morphTargetInfluences[ 0 ] = 0;
-                        l.material.needsUpdate = true;
+                        l.material.uniforms.animated.value = 1.;
+                        //l.morphTargetInfluences[ 0 ] = 0;
+                        //l.material.needsUpdate = true;
                     }
+                    
                 }
             }
             
             requestAnimationFrame(refreshLinks);
             globeView.notifyChange(true);
         }
+
+
+        
+        const animatedTubeVertexShader = `
+        
+            #include <logdepthbuf_pars_vertex>
+            uniform vec3 firstPoint;
+            uniform float len;
+            uniform float time;
+            uniform float animated;
+            varying vec3 vNormal;
+            varying float distStart;
+            vec3 newPos;
+
+            void main() 
+            {
+                vNormal = normal;
+                distStart = distance(position, firstPoint) / len;  // Normalized distance
+                float t = mod(time, 50.) / 50.;  // Normalized time
+                float swell = 0.; //distStart * 10. - t * 10.;//10. - (distStart - (mod(time,1000.) / 100.)) / 100.;
+                if(abs(distStart - t) < 0.1 && animated > 0.) swell = 5.;
+                newPos = position + vNormal * swell; //mod(distStart, mod(time,100.))  ;//position + vNormal * distStart/30. * time / 100.; 
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0 );
+                #include <logdepthbuf_vertex>
+            }
+                
+        `;
+
+        const animatedTubeFragmentShader = `
+            
+            #include <logdepthbuf_pars_fragment>
+            varying vec3 vNormal;
+            varying float distStart;
+
+            void main() 
+            {
+                #include <logdepthbuf_fragment>
+                gl_FragColor = vec4(vNormal.x, vNormal.y, vNormal.z, 1.) + vec4(0.8); //vec4(1.,0.,0.,1.);
+            }
+                
+        `;
 
 
 
@@ -633,11 +680,39 @@
                             geometry.vertices[1]
                         );
 
-                        var points = curve.getPoints(50);
+                        curve.getPoints(50);
                      
                         // Create a Tube Geometry out of the curve3
                         var segments = 20, tubeRadius = 2, radiusSegments = 8;
                         var geometryTube = new THREE.TubeGeometry(curve, segments, tubeRadius, radiusSegments, false);
+
+                                 // We add a uniform to know where is the first point to allow animation         
+                        var shaderMaterial = new itowns.THREE.ShaderMaterial( {
+
+                            uniforms: {
+                                firstPoint : {value: new itowns.THREE.Vector3()},
+                                animated: {value: 0.},
+                                len : { value: 0.},
+                                time: { value: 1.0 }
+                            },
+                            vertexShader: animatedTubeVertexShader,
+                            fragmentShader: animatedTubeFragmentShader,
+
+                        } );
+
+                        // We set the first point
+                        shaderMaterial.uniforms.firstPoint.value = geometryTube.vertices[0];
+                        shaderMaterial.uniforms.len.value = geometryTube.vertices[geometryTube.vertices.length - 1].clone().distanceTo(geometryTube.vertices[0]);
+
+
+                   /*     // We use the colors attribute to fill it with identification number so we can
+                        // know in the shader the order of vertices from the beginning
+                        var colors = new Float32Array(4 * geometryTube.vertices.length);
+                    */
+
+                       
+                        console.log(geometryTube);
+/*
                         var geometryTube2 = new THREE.TubeGeometry(curve, segments, tubeRadius*1.4, radiusSegments, false);
                         var v1 = geometryTube.vertices;
                         var v2 = geometryTube2.vertices;
@@ -652,7 +727,7 @@
                             v.y += Math.random()*5;
                             v.z += Math.random()*5;
                         }
-
+*/
                         // Let's compute a conic shape using the 2 tubes
            /*             for ( var a = 0; i < v2.length; a ++ ) {
 
@@ -665,12 +740,12 @@
                         }
 */
                         //console.log(geometryTube);
-                        var material = new THREE.MeshNormalMaterial({ transparent: true, opacity: 0.8, morphTargets: true/*, side: THREE.DoubleSide*/ });
+                        var material = shaderMaterial;//new THREE.MeshNormalMaterial({ transparent: true, opacity: 0.8, morphTargets: true/*, side: THREE.DoubleSide*/ });
                         
                         //generateMorphTargets(geometryTube);
-                        geometryTube.morphTargets.push( { name: 'target1', vertices: geometryRandom.vertices/*geometryTube2.vertices*/ } );
+    //                    geometryTube.morphTargets.push( { name: 'target1', vertices: geometryRandom.vertices/*geometryTube2.vertices*/ } );
                         var mesh = new THREE.Mesh(geometryTube, material);
-                        mesh.morphTargetInfluences[ 0 ] = ( 1 + Math.sin( 0.04 * time ) );// / 2;
+      //                  mesh.morphTargetInfluences[ 0 ] = ( 1 + Math.sin( 0.04 * time ) );// / 2;
                         mesh.material.needsUpdate = true;
                         //mesh.updateMorphTargets();
 		                //material.needsUpdate = true;
